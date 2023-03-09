@@ -3,6 +3,7 @@
 
 #include "TantrumnPlayerController.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 void ATantrumnPlayerController::SetupInputComponent()
 {
@@ -12,6 +13,14 @@ void ATantrumnPlayerController::SetupInputComponent()
 	{
 		// bind inputs
 		InputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestJump);
+		InputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestStopJump);
+
+		InputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestCrouchStart);
+		InputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestCrouchEnd);
+
+		InputComponent->BindAction(TEXT("Sprint"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestSprintStart);
+		InputComponent->BindAction(TEXT("Sprint"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestSprintEnd);
+
 		InputComponent->BindAxis(TEXT("MoveForward"), this, &ATantrumnPlayerController::RequestMoveForward);
 		InputComponent->BindAxis(TEXT("MoveRight"), this, &ATantrumnPlayerController::RequestMoveRight);
 		InputComponent->BindAxis(TEXT("LookUp"), this, &ATantrumnPlayerController::RequestLookUp);
@@ -24,6 +33,51 @@ void ATantrumnPlayerController::RequestJump()
 	if (GetCharacter())
 	{
 		GetCharacter()->Jump();
+	}
+}
+
+void ATantrumnPlayerController::RequestStopJump()
+{
+	if (GetCharacter())
+	{
+		GetCharacter()->StopJumping();
+	}
+}
+
+void ATantrumnPlayerController::RequestCrouchStart()
+{
+	if (!GetCharacter()->GetCharacterMovement()->IsMovingOnGround())
+	{
+		return;
+	}
+
+	if (GetCharacter())
+	{
+		GetCharacter()->Crouch();
+	}
+}
+
+void ATantrumnPlayerController::RequestCrouchEnd()
+{
+	if (GetCharacter())
+	{
+		GetCharacter()->UnCrouch();
+	}
+}
+
+void ATantrumnPlayerController::RequestSprintStart()
+{
+	if (GetCharacter())
+	{
+		GetCharacter()->GetCharacterMovement()->MaxWalkSpeed += SprintSpeed;
+	}
+}
+
+void ATantrumnPlayerController::RequestSprintEnd()
+{
+	if (GetCharacter())
+	{
+		GetCharacter()->GetCharacterMovement()->MaxWalkSpeed -= SprintSpeed;
 	}
 }
 
