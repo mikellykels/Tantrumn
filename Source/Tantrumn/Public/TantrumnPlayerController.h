@@ -38,7 +38,4 @@ protected:
 	// Base lookup rate, in deg/sec. Other scaling may affect final lookup rate
 	UPROPERTY(EditAnywhere, Category = "Look")
 	float BaseLookRightRate = 90.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float SprintSpeed = 1200.0f;
 };
