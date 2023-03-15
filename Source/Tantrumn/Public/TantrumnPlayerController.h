@@ -26,6 +26,8 @@ protected:
 	void RequestSprintStart();
 	void RequestSprintEnd();
 
+	void Fire();
+
 	void RequestMoveForward(float AxisValue);
 	void RequestMoveRight(float AxisValue);
 	void RequestLookUp(float AxisValue);

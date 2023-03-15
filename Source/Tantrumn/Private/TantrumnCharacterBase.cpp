@@ -3,7 +3,9 @@
 
 #include "TantrumnCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "DrawDebugHelpers.h"
 #include "TantrumnPlayerController.h"
+#include "Projectile.h"
 
 // Sets default values
 ATantrumnCharacterBase::ATantrumnCharacterBase()
@@ -11,6 +13,8 @@ ATantrumnCharacterBase::ATantrumnCharacterBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	ProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(TEXT("Spawn Point"));
+	ProjectileSpawnPoint->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -109,4 +113,19 @@ void ATantrumnCharacterBase::OnStunEnd()
 {
 	StunBeginTimestamp = 0.0f;
 	StunTime = 0.0f;
+}
+
+void ATantrumnCharacterBase::Fire()
+{
+	FVector Location = ProjectileSpawnPoint->GetComponentLocation();
+	FRotator Rotation = ProjectileSpawnPoint->GetComponentRotation();
+
+	GetWorld()->SpawnActor<AProjectile>(ProjectileClass, Location, Rotation);
+
+	ATantrumnPlayerController* TantrumnPlayerController = GetController<ATantrumnPlayerController>();
+
+	if (TantrumnPlayerController)
+	{
+		TantrumnPlayerController->PlayDynamicForceFeedback(1.0f, 0.1f, false, true, false, true);
+	}
 }
