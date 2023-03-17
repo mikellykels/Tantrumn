@@ -6,6 +6,7 @@
 #include "DrawDebugHelpers.h"
 #include "TantrumnPlayerController.h"
 #include "Projectile.h"
+#include "LightSwitch.h"
 
 // Sets default values
 ATantrumnCharacterBase::ATantrumnCharacterBase()
@@ -15,6 +16,9 @@ ATantrumnCharacterBase::ATantrumnCharacterBase()
 
 	ProjectileSpawnPoint = CreateDefaultSubobject<USceneComponent>(TEXT("Spawn Point"));
 	ProjectileSpawnPoint->SetupAttachment(RootComponent);
+
+	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Interaction Box"));
+	InteractionBox->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -26,6 +30,8 @@ void ATantrumnCharacterBase::BeginPlay()
 		MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	}
 	
+	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxBeginOverlap);
+	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxEndOverlap);
 }
 
 // Called every frame
@@ -40,7 +46,6 @@ void ATantrumnCharacterBase::Tick(float DeltaTime)
 			OnStunEnd();
 		}
 	}
-
 }
 
 // Called to bind functionality to input
@@ -128,4 +133,45 @@ void ATantrumnCharacterBase::Fire()
 	{
 		TantrumnPlayerController->PlayDynamicForceFeedback(1.0f, 0.1f, false, true, false, true);
 	}
+}
+
+void ATantrumnCharacterBase::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+	if (OtherActor->IsA(ALightSwitch::StaticClass()))
+	{
+		TArray<AActor*> OverlappingActors;
+
+		GetOverlappingActors(OverlappingActors);
+
+		AActor* ClosestActor = OverlappingActors[0];
+
+		for (auto CurrentActor : OverlappingActors)
+		{
+			if (GetDistanceTo(CurrentActor) < GetDistanceTo(ClosestActor))
+			{
+				ClosestActor = CurrentActor;
+			}
+		}
+
+		if (Interface)
+		{
+			Interface->HideInteractionWidget();
+		}
+
+		Interface = Cast<IInteractionInterface>(ClosestActor);
+		if (Interface)
+		{
+			Interface->ShowInteractionWidget();
+		}
+	}
+}
+
+void ATantrumnCharacterBase::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+		if (Interface)
+		{
+			Interface->HideInteractionWidget();
+			Interface = nullptr;
+		}
 }

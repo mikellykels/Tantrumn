@@ -28,6 +28,9 @@ void ATantrumnPlayerController::SetupInputComponent()
 		InputComponent->BindAxis(TEXT("MoveRight"), this, &ATantrumnPlayerController::RequestMoveRight);
 		InputComponent->BindAxis(TEXT("LookUp"), this, &ATantrumnPlayerController::RequestLookUp);
 		InputComponent->BindAxis(TEXT("LookRight"), this, &ATantrumnPlayerController::RequestLookRight);
+
+		// Interact
+		InputComponent->BindAction(TEXT("Interact"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::OnInteract);
 	}
 }
 
@@ -120,5 +123,16 @@ void ATantrumnPlayerController::RequestLookUp(float AxisValue)
 void ATantrumnPlayerController::RequestLookRight(float AxisValue)
 {
 	AddYawInput(AxisValue * BaseLookRightRate * GetWorld()->GetDeltaSeconds());
+}
+
+void ATantrumnPlayerController::OnInteract()
+{
+	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
+	{
+		if (TantrumnCharacterBase->Interface)
+		{
+			TantrumnCharacterBase->Interface->InteractWithMe();
+		}
+	}
 }
 
