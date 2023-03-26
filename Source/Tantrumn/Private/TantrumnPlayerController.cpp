@@ -4,6 +4,8 @@
 #include "TantrumnPlayerController.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+//#include "TantrumnGameModeBase.h"
 #include "TantrumnCharacterBase.h"
 
 void ATantrumnPlayerController::SetupInputComponent()
@@ -12,15 +14,15 @@ void ATantrumnPlayerController::SetupInputComponent()
 
 	if (InputComponent)
 	{
-		// bind inputs
-		InputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestJump);
-		InputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestStopJump);
+		// Movement
+		InputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestJumpStart);
+		InputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestJumpStop);
 
 		InputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestCrouchStart);
-		InputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestCrouchEnd);
+		InputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestCrouchStop);
 
 		InputComponent->BindAction(TEXT("Sprint"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestSprintStart);
-		InputComponent->BindAction(TEXT("Sprint"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestSprintEnd);
+		InputComponent->BindAction(TEXT("Sprint"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestSprintStop);
 
 		InputComponent->BindAction(TEXT("Fire"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::Fire);
 
@@ -31,10 +33,37 @@ void ATantrumnPlayerController::SetupInputComponent()
 
 		// Interact
 		InputComponent->BindAction(TEXT("Interact"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::OnInteract);
+
+		// Pull/Throw
+		InputComponent->BindAction(TEXT("PullObject"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestPullObjectStart);
+		InputComponent->BindAction(TEXT("PullObject"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestPullObjectStop);
+
+		InputComponent->BindAction(TEXT("ThrowObject"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestThrowObject);
 	}
 }
 
-void ATantrumnPlayerController::RequestJump()
+void ATantrumnPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	//GameModeRef = Cast<ATantrumnGameModeBase>(GetWorld()->GetAuthGameMode());
+
+	//if (HUDClass)
+	//{
+		//HUDWidget = CreateWidget(this, HUDClass);
+		//if (HUDWidget)
+		//{
+			//HUDWidget->AddToViewport();
+		//}
+	//}
+
+	if (GetCharacter())
+	{
+		DefaultWalkSpeed = GetCharacter()->GetCharacterMovement()->MaxWalkSpeed;
+	}
+}
+
+void ATantrumnPlayerController::RequestJumpStart()
 {
 	if (GetCharacter())
 	{
@@ -42,7 +71,7 @@ void ATantrumnPlayerController::RequestJump()
 	}
 }
 
-void ATantrumnPlayerController::RequestStopJump()
+void ATantrumnPlayerController::RequestJumpStop()
 {
 	if (GetCharacter())
 	{
@@ -63,7 +92,7 @@ void ATantrumnPlayerController::RequestCrouchStart()
 	}
 }
 
-void ATantrumnPlayerController::RequestCrouchEnd()
+void ATantrumnPlayerController::RequestCrouchStop()
 {
 	if (GetCharacter())
 	{
@@ -73,17 +102,17 @@ void ATantrumnPlayerController::RequestCrouchEnd()
 
 void ATantrumnPlayerController::RequestSprintStart()
 {
-	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
+	if (GetCharacter())
 	{
-		TantrumnCharacterBase->RequestSprintStart();
+		GetCharacter()->GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
 	}
 }
 
-void ATantrumnPlayerController::RequestSprintEnd()
+void ATantrumnPlayerController::RequestSprintStop()
 {
-	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
+	if (GetCharacter())
 	{
-		TantrumnCharacterBase->RequestSprintEnd();
+		GetCharacter()->GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
 	}
 }
 
@@ -125,6 +154,30 @@ void ATantrumnPlayerController::RequestLookRight(float AxisValue)
 	AddYawInput(AxisValue * BaseLookRightRate * GetWorld()->GetDeltaSeconds());
 }
 
+void ATantrumnPlayerController::RequestThrowObject()
+{
+	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
+	{
+		TantrumnCharacterBase->RequestThrowObject();
+	}
+}
+
+void ATantrumnPlayerController::RequestPullObjectStart()
+{
+	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
+	{
+		TantrumnCharacterBase->RequestPullObjectStart();
+	}
+}
+
+void ATantrumnPlayerController::RequestPullObjectStop()
+{
+	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
+	{
+		TantrumnCharacterBase->RequestPullObjectStop();
+	}
+}
+
 void ATantrumnPlayerController::OnInteract()
 {
 	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
@@ -135,4 +188,5 @@ void ATantrumnPlayerController::OnInteract()
 		}
 	}
 }
+
 

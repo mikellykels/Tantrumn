@@ -6,7 +6,19 @@
 #include "GameFramework/Character.h"
 #include "Components/BoxComponent.h"
 #include "InteractionInterface.h"
+#include "ThrowableActor.h"
+#include "Sound/SoundCue.h"
 #include "TantrumnCharacterBase.generated.h"
+
+UENUM(BlueprintType)
+enum class ECharacterThrowState : uint8
+{
+	None           UMETA(DisplayName = "None"),
+	RequestingPull UMETA(DisplayName = "RequestingPull"),
+	Pulling        UMETA(DisplayName = "Pulling"),
+	Attached       UMETA(DisplayName = "Attached"),
+	Throwing       UMETA(DisplayName = "Throwing"),
+};
 
 UCLASS()
 class TANTRUMN_API ATantrumnCharacterBase : public ACharacter
@@ -44,8 +56,39 @@ protected:
 
 	float MaxWalkSpeed = 0.0f;
 
+	USoundCue* HeavyLandSound = nullptr;
+
 	void OnStunBegin(float StunRatio);
 	void OnStunEnd();
+	void UpdateStun();
+
+	bool PlayThrowMontage();
+
+	void UnbindMontage();
+
+	UFUNCTION()
+	void OnMontageBlendingOut(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+	void OnNotifyBeginRecieved(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointNotifyPayload);
+
+	UFUNCTION()
+	void OnNotifyEndRecieved(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointNotifyPayload);
+
+	UPROPERTY(VisibleAnywhere, Category = "Throw")
+	ECharacterThrowState CharacterThrowState = ECharacterThrowState::None;
+
+	UPROPERTY(EditAnywhere, Category = "Throw", meta = (ClampMin = "0.0", Unit = "ms"))
+	float ThrowSpeed = 2000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	UAnimMontage* ThrowMontage = nullptr;
+
+	FOnMontageBlendingOutStarted BlendingOutDelegate;
+	FOnMontageEnded MontageEndedDelegate;
 
 public:	
 	// Called every frame
@@ -60,9 +103,50 @@ public:
 	void RequestSprintEnd();
 	void Fire();
 
+	void RequestThrowObject();
+	void RequestPullObjectStart();
+	void RequestPullObjectStop();
+	void ResetThrowableObject();
+
+	void OnThrowableAttached(AThrowableActor* InThrowableActor);
+
+	void SphereCastPlayerView();
+
+	void SphereCastActorTransform();
+
+	void LineCastActorTransform();
+
+	void ProcessTraceResult(const FHitResult& HitResult);
+
+	bool CanThrowObject() const 
+	{ 
+		return CharacterThrowState == ECharacterThrowState::Attached || CharacterThrowState == ECharacterThrowState::Pulling;
+	}
+
+	UFUNCTION(BlueprintPure)
+	bool IsPullingObject() const 
+	{ 
+		return CharacterThrowState == ECharacterThrowState::RequestingPull || CharacterThrowState == ECharacterThrowState::Pulling; 
+	}
+
+	UFUNCTION(BlueprintPure)
+	ECharacterThrowState GetCharacterThrowState() const 
+	{ 
+		return CharacterThrowState; 
+	}
+
+	UFUNCTION(BlueprintPure)
+	bool IsStunned() const 
+	{ 
+		return bIsStunned; 
+	}
+
 	IInteractionInterface* Interface = nullptr;
 
 private:
+	UPROPERTY()
+	AThrowableActor* ThrowableActor;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	USceneComponent* ProjectileSpawnPoint;
 
