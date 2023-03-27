@@ -7,7 +7,7 @@
 #include "Sound/SoundCue.h"
 #include "TantrumnPlayerController.generated.h"
 
-//class ATantrumnGameModeBase;
+class ATantrumnGameModeBase;
 class UUserWidget;
 
 /**
@@ -70,7 +70,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Sound")
 	USoundCue* JumpSound = nullptr;
 
-	//ATantrumnGameModeBase* GameModeRef;
+	ATantrumnGameModeBase* GameModeRef;
 
 	// used to determine flick of axis - NOT USING - I'M USING BUTTON PRESS INSTEAD OF AXIS
 	//float LastAxis = 0.0f;

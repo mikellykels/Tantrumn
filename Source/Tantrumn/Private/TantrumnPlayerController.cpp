@@ -5,8 +5,9 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-//#include "TantrumnGameModeBase.h"
 #include "TantrumnCharacterBase.h"
+
+#include "../TantrumnGameModeBase.h"
 
 void ATantrumnPlayerController::SetupInputComponent()
 {
@@ -46,15 +47,15 @@ void ATantrumnPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//GameModeRef = Cast<ATantrumnGameModeBase>(GetWorld()->GetAuthGameMode());
+	GameModeRef = Cast<ATantrumnGameModeBase>(GetWorld()->GetAuthGameMode());
 
 	//if (HUDClass)
 	//{
-		//HUDWidget = CreateWidget(this, HUDClass);
-		//if (HUDWidget)
-		//{
-			//HUDWidget->AddToViewport();
-		//}
+	//	HUDWidget = CreateWidget(this, HUDClass);
+	//	if (HUDWidget)
+	//	{
+	//		HUDWidget->AddToViewport();
+	//	}
 	//}
 
 	if (GetCharacter())

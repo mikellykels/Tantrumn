@@ -4,6 +4,9 @@
 #include "TantrumnCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Components/TextBlock.h"
+#include "Blueprint/UserWidget.h"
 #include "DrawDebugHelpers.h"
 #include "TantrumnPlayerController.h"
 #include "Projectile.h"
@@ -55,6 +58,35 @@ void ATantrumnCharacterBase::BeginPlay()
 	
 	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxBeginOverlap);
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxEndOverlap);
+}
+
+void ATantrumnCharacterBase::DisplayEquippedWidget()
+{
+	if (IsValid(EquippedNameWidgetClass))
+	{
+		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		EquippedNameWidget = CreateWidget<UEquippedNameWidget>(PlayerController, EquippedNameWidgetClass);
+		if (EquippedNameWidget)
+		{
+			EquippedNameWidget->AddToViewport();
+		}
+	}
+}
+
+void ATantrumnCharacterBase::DisplayEquippedName()
+{
+	TArray<AActor*> AttachedActors;
+	GetAttachedActors(AttachedActors);
+	AActor* AttachedActor = AttachedActors[0];
+	GetNameInterface = Cast<IGetNameInterface>(AttachedActor);
+	if (GetNameInterface)
+	{
+		if (AttachedActor->GetClass()->ImplementsInterface(UGetNameInterface::StaticClass()))
+		{
+			FString Name = GetNameInterface->GetName();
+			EquippedNameWidget->EquippedName->SetText(FText::FromString(Name));
+		}
+	}
 }
 
 // Called every frame
@@ -215,6 +247,8 @@ void ATantrumnCharacterBase::RequestThrowObject()
 		if (PlayThrowMontage())
 		{
 			CharacterThrowState = ECharacterThrowState::Throwing;
+			bIsThrowableActorAttached = false;
+			EquippedNameWidget->RemoveFromViewport();
 		}
 		else
 		{
@@ -255,8 +289,11 @@ void ATantrumnCharacterBase::ResetThrowableObject()
 void ATantrumnCharacterBase::OnThrowableAttached(AThrowableActor* InThrowableActor)
 {
 	CharacterThrowState = ECharacterThrowState::Attached;
+	bIsThrowableActorAttached = true;
 	ThrowableActor = InThrowableActor;
 	MoveIgnoreActorAdd(ThrowableActor);
+	DisplayEquippedWidget();
+	DisplayEquippedName();
 }
 
 void ATantrumnCharacterBase::SphereCastPlayerView()

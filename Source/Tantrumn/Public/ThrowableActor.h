@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GetNameInterface.h"
 #include "ThrowableActor.generated.h"
 
 class UStaticMeshComponent;
 class UProjectileMovementComponent;
 
 UCLASS()
-class TANTRUMN_API AThrowableActor : public AActor
+class TANTRUMN_API AThrowableActor : public AActor, public IGetNameInterface
 {
 	GENERATED_BODY()
 	
@@ -38,6 +39,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ToggleHighlight(bool bIsOn);
+
+	UPROPERTY(EditAnywhere)
+	FString Name = "Throwable Actor";
+
+	virtual FString GetName() { return Name; };
 
 protected:
 	enum class EState

@@ -6,9 +6,13 @@
 #include "GameFramework/Character.h"
 #include "Components/BoxComponent.h"
 #include "InteractionInterface.h"
+#include "GetNameInterface.h"
 #include "ThrowableActor.h"
+#include "EquippedNameWidget.h"
 #include "Sound/SoundCue.h"
 #include "TantrumnCharacterBase.generated.h"
+
+class UUserWidget;
 
 UENUM(BlueprintType)
 enum class ECharacterThrowState : uint8
@@ -53,6 +57,7 @@ protected:
 
 	bool bIsStunned = false;
 	bool bIsSprinting = false;
+	bool bIsThrowableActorAttached = false;
 
 	float MaxWalkSpeed = 0.0f;
 
@@ -86,6 +91,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	UAnimMontage* ThrowMontage = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UBoxComponent* InteractionBox;
+
+	void DisplayEquippedWidget();
+	void DisplayEquippedName();
 
 	FOnMontageBlendingOutStarted BlendingOutDelegate;
 	FOnMontageEnded MontageEndedDelegate;
@@ -141,20 +152,30 @@ public:
 		return bIsStunned; 
 	}
 
+	UFUNCTION(BlueprintPure)
+	bool IsThrowableActorAttached() const
+	{
+		return bIsThrowableActorAttached;
+	}
+
 	IInteractionInterface* Interface = nullptr;
+	IGetNameInterface* GetNameInterface = nullptr;
 
 private:
 	UPROPERTY()
 	AThrowableActor* ThrowableActor;
+
+	UPROPERTY(EditAnywhere, Category = "HUD")
+	TSubclassOf<UUserWidget> EquippedNameWidgetClass = nullptr;
+
+	UPROPERTY()
+	UEquippedNameWidget* EquippedNameWidget = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	USceneComponent* ProjectileSpawnPoint;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Combat")
 	TSubclassOf<class AProjectile> ProjectileClass;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* InteractionBox;
 
 	UFUNCTION()
 	void OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
