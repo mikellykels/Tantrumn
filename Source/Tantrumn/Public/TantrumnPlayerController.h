@@ -18,9 +18,12 @@ class TANTRUMN_API ATantrumnPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+	
+	virtual void BeginPlay() override;
+
 protected:
 	void SetupInputComponent() override;
-	virtual void BeginPlay() override;
 
 	void RequestJumpStart();
 	void RequestJumpStop();
@@ -46,6 +49,8 @@ protected:
 	void RequestPullObjectStop();
 
 	void OnInteract();
+
+	void OnPauseGame();
 
 	//UPROPERTY(EditAnywhere, Category = "HUD")
 	//TSubclassOf<class UUserWidget> HUDClass;

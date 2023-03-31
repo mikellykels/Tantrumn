@@ -9,6 +9,27 @@
 
 #include "../TantrumnGameModeBase.h"
 
+void ATantrumnPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	GameModeRef = Cast<ATantrumnGameModeBase>(GetWorld()->GetAuthGameMode());
+
+	//if (HUDClass)
+	//{
+	//	HUDWidget = CreateWidget(this, HUDClass);
+	//	if (HUDWidget)
+	//	{
+	//		HUDWidget->AddToViewport();
+	//	}
+	//}
+
+	if (GetCharacter())
+	{
+		DefaultWalkSpeed = GetCharacter()->GetCharacterMovement()->MaxWalkSpeed;
+	}
+}
+
 void ATantrumnPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -35,6 +56,9 @@ void ATantrumnPlayerController::SetupInputComponent()
 		// Interact
 		InputComponent->BindAction(TEXT("Interact"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::OnInteract);
 
+		// Pause
+		InputComponent->BindAction(TEXT("Pause"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::OnPauseGame);
+
 		// Pull/Throw
 		InputComponent->BindAction(TEXT("PullObject"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestPullObjectStart);
 		InputComponent->BindAction(TEXT("PullObject"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestPullObjectStop);
@@ -43,29 +67,13 @@ void ATantrumnPlayerController::SetupInputComponent()
 	}
 }
 
-void ATantrumnPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-
-	GameModeRef = Cast<ATantrumnGameModeBase>(GetWorld()->GetAuthGameMode());
-
-	//if (HUDClass)
-	//{
-	//	HUDWidget = CreateWidget(this, HUDClass);
-	//	if (HUDWidget)
-	//	{
-	//		HUDWidget->AddToViewport();
-	//	}
-	//}
-
-	if (GetCharacter())
-	{
-		DefaultWalkSpeed = GetCharacter()->GetCharacterMovement()->MaxWalkSpeed;
-	}
-}
-
 void ATantrumnPlayerController::RequestJumpStart()
 {
+	if (!GameModeRef || GameModeRef->GetCurrentGameState() != EGameState::Playing)
+	{
+		return;
+	}
+
 	if (GetCharacter())
 	{
 		GetCharacter()->Jump();
@@ -82,6 +90,11 @@ void ATantrumnPlayerController::RequestJumpStop()
 
 void ATantrumnPlayerController::RequestCrouchStart()
 {
+	if (!GameModeRef || GameModeRef->GetCurrentGameState() != EGameState::Playing)
+	{
+		return;
+	}
+
 	if (!GetCharacter()->GetCharacterMovement()->IsMovingOnGround())
 	{
 		return;
@@ -103,6 +116,11 @@ void ATantrumnPlayerController::RequestCrouchStop()
 
 void ATantrumnPlayerController::RequestSprintStart()
 {
+	if (!GameModeRef || GameModeRef->GetCurrentGameState() != EGameState::Playing)
+	{
+		return;
+	}
+
 	if (GetCharacter())
 	{
 		GetCharacter()->GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
@@ -127,6 +145,11 @@ void ATantrumnPlayerController::Fire()
 
 void ATantrumnPlayerController::RequestMoveForward(float AxisValue)
 {
+	if (!GameModeRef || GameModeRef->GetCurrentGameState() != EGameState::Playing)
+	{
+		return;
+	}
+
 	if (AxisValue != 0.f)
 	{
 		FRotator const ControlSpaceRot = GetControlRotation();
@@ -137,6 +160,11 @@ void ATantrumnPlayerController::RequestMoveForward(float AxisValue)
 
 void ATantrumnPlayerController::RequestMoveRight(float AxisValue)
 {
+	if (!GameModeRef || GameModeRef->GetCurrentGameState() != EGameState::Playing)
+	{
+		return;
+	}
+
 	if (AxisValue != 0.f)
 	{
 		FRotator const ControlSpaceRot = GetControlRotation();
@@ -165,6 +193,11 @@ void ATantrumnPlayerController::RequestThrowObject()
 
 void ATantrumnPlayerController::RequestPullObjectStart()
 {
+	if (!GameModeRef || GameModeRef->GetCurrentGameState() != EGameState::Playing)
+	{
+		return;
+	}
+
 	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
 	{
 		TantrumnCharacterBase->RequestPullObjectStart();
@@ -181,6 +214,11 @@ void ATantrumnPlayerController::RequestPullObjectStop()
 
 void ATantrumnPlayerController::OnInteract()
 {
+	if (!GameModeRef || GameModeRef->GetCurrentGameState() != EGameState::Playing)
+	{
+		return;
+	}
+
 	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
 	{
 		if (TantrumnCharacterBase->Interface)
@@ -188,6 +226,16 @@ void ATantrumnPlayerController::OnInteract()
 			TantrumnCharacterBase->Interface->InteractWithMe();
 		}
 	}
+}
+
+void ATantrumnPlayerController::OnPauseGame()
+{
+	if (!GameModeRef || GameModeRef->GetCurrentGameState() != EGameState::Playing)
+	{
+		return;
+	}
+
+	GameModeRef->PlayerPausedGame();
 }
 
 
