@@ -29,8 +29,7 @@ void ATantrumnGameModeBase::PlayerReachedEnd()
 	
 	GameWidget->LevelComplete();
 
-	FInputModeUIOnly InputMode;
-	PC->SetInputMode(InputMode);
+	PC->SetInputMode(FInputModeUIOnly());
 	PC->SetShowMouseCursor(true);
 }
 
@@ -42,8 +41,7 @@ void ATantrumnGameModeBase::PlayerPausedGame()
 	PausedWidget->LevelPaused(this);
 
 	UGameplayStatics::SetGamePaused(GetWorld(), true);
-	FInputModeUIOnly InputMode;
-	PC->SetInputMode(InputMode);
+	PC->SetInputMode(FInputModeUIOnly());
 	PC->SetShowMouseCursor(true);
 
 	GameWidget->SetVisibility(ESlateVisibility::Hidden);
@@ -56,8 +54,7 @@ void ATantrumnGameModeBase::PlayerResumedGame()
 	GameWidget->SetVisibility(ESlateVisibility::Visible);
 
 	UGameplayStatics::SetGamePaused(GetWorld(), false);
-	FInputModeGameOnly InputMode;
-	PC->SetInputMode(InputMode);
+	PC->SetInputMode(FInputModeGameOnly());
 	PC->SetShowMouseCursor(false);
 }
 
@@ -78,8 +75,7 @@ void ATantrumnGameModeBase::StartGame()
 {
 	CurrentGameState = EGameState::Playing;
 
-	FInputModeGameOnly InputMode;
-	PC->SetInputMode(InputMode);
+	PC->SetInputMode(FInputModeGameOnly());
 	PC->SetShowMouseCursor(false);
 }
 
