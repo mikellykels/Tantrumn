@@ -410,34 +410,33 @@ void ATantrumnCharacterBase::ProcessTraceResult(const FHitResult& HitResult)
 
 void ATantrumnCharacterBase::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
-	if (OtherActor->IsA(ALightSwitch::StaticClass()))
-	{
-		TArray<AActor*> OverlappingActors;
-
-		GetOverlappingActors(OverlappingActors);
-
-		AActor* ClosestActor = OverlappingActors[0];
-
-		for (auto CurrentActor : OverlappingActors)
+		if (OtherActor->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass()))
 		{
-			if (GetDistanceTo(CurrentActor) < GetDistanceTo(ClosestActor))
+			TArray<AActor*> OverlappingActors;
+
+			GetOverlappingActors(OverlappingActors);
+
+			AActor* ClosestActor = OverlappingActors[0];
+
+			for (auto CurrentActor : OverlappingActors)
 			{
-				ClosestActor = CurrentActor;
+				if (GetDistanceTo(CurrentActor) < GetDistanceTo(ClosestActor))
+				{
+					ClosestActor = CurrentActor;
+				}
+			}
+
+			if (Interface)
+			{
+				Interface->HideInteractionWidget();
+			}
+
+			Interface = Cast<IInteractionInterface>(ClosestActor);
+			if (Interface)
+			{
+				Interface->ShowInteractionWidget();
 			}
 		}
-
-		if (Interface)
-		{
-			Interface->HideInteractionWidget();
-		}
-
-		Interface = Cast<IInteractionInterface>(ClosestActor);
-		if (Interface)
-		{
-			Interface->ShowInteractionWidget();
-		}
-	}
 }
 
 void ATantrumnCharacterBase::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
