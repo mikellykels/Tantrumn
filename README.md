@@ -5,4 +5,5 @@
 - Week 2: The 3 C's  
 - Week 3: Kinematics  
 - Week 4: Throw Feature  
-- Week 5: Game Loop
+- Week 5: Game Loop  
+- Week 6: Intro to AI
