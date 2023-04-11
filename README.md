@@ -6,4 +6,5 @@
 - Week 3: Kinematics  
 - Week 4: Throw Feature  
 - Week 5: Game Loop  
-- Week 6: Intro to AI
+- Week 6: Intro to AI  
+- Week 7: Expanding on AI
