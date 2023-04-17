@@ -42,8 +42,7 @@ protected:
 	void RequestLookRight(float AxisValue);
 
 	void RequestThrowObject();
-
-	//void RequestThrowObject(float AxisValue);
+	void RequestUseObject();
 
 	void RequestPullObjectStart();
 	void RequestPullObjectStop();
@@ -66,20 +65,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Look")
 	float BaseLookRightRate = 90.0f;
 
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float SprintSpeed = 1800.0f;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	float DefaultWalkSpeed = 0.0f;
-
 	UPROPERTY(EditAnywhere, Category = "Sound")
 	USoundCue* JumpSound = nullptr;
 
 	ATantrumnGameModeBase* GameModeRef;
 
-	// used to determine flick of axis - NOT USING - I'M USING BUTTON PRESS INSTEAD OF AXIS
-	//float LastAxis = 0.0f;
-
-	//UPROPERTY(EditAnywhere, Category = "Input")
-	//float FlickThreshold = 0.75f;
 };

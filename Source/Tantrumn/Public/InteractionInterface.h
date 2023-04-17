@@ -13,9 +13,15 @@ class UInteractionInterface : public UInterface
 	GENERATED_BODY()
 };
 
-/**
- * 
- */
+UENUM(BlueprintType)
+enum class EEffectType : uint8
+{
+	None          UMETA(DisplayName = "None"),
+	Speed         UMETA(DisplayName = "SpeedBuff"),
+	Jump          UMETA(DisplayName = "JumpBuff"),
+	Power         UMETA(DisplayName = "PowerBuff"),
+};
+
 class TANTRUMN_API IInteractionInterface
 {
 	GENERATED_BODY()
@@ -26,4 +32,7 @@ public:
 
 	virtual void ShowInteractionWidget();
 	virtual void HideInteractionWidget();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interact")
+	void ApplyEffect(EEffectType EffectType, bool bIsBuff);
 };

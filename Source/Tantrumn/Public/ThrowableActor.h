@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GetNameInterface.h"
+#include "InteractionInterface.h"
 #include "ThrowableActor.generated.h"
 
 class UStaticMeshComponent;
@@ -45,6 +46,8 @@ public:
 
 	virtual FString GetName() { return Name; };
 
+	EEffectType GetEffectType();
+
 protected:
 	enum class EState
 	{
@@ -77,4 +80,8 @@ protected:
 	AActor* PullActor = nullptr;
 
 	EState State = EState::Idle;
+
+	UPROPERTY(EditAnywhere, Category = "Effect")
+	EEffectType EffectType = EEffectType::None;
+
 };

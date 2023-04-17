@@ -55,6 +55,13 @@ ATantrumnCharacterBase::ATantrumnCharacterBase()
 void ATantrumnCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	EffectCooldown = DefaultEffectCooldown;
+
+	if (GetCharacterMovement())
+	{
+		MaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	}
 	
 	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxBeginOverlap);
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxEndOverlap);
@@ -98,6 +105,20 @@ void ATantrumnCharacterBase::Tick(float DeltaTime)
 	if (bIsStunned)
 	{
 		return;
+	}
+
+	if (bIsUnderEffect)
+	{
+		if (EffectCooldown > 0)
+		{
+			EffectCooldown -= DeltaTime;
+		}
+		else
+		{
+			bIsUnderEffect = false;
+			EffectCooldown = DefaultEffectCooldown;
+			EndEffect();
+		}
 	}
 
 	if (CharacterThrowState == ECharacterThrowState::Throwing)
@@ -286,6 +307,13 @@ void ATantrumnCharacterBase::ResetThrowableObject()
 	ThrowableActor = nullptr;
 }
 
+void ATantrumnCharacterBase::RequestUseObject()
+{
+	ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
+	ThrowableActor->Destroy();
+	ResetThrowableObject();
+}
+
 void ATantrumnCharacterBase::OnThrowableAttached(AThrowableActor* InThrowableActor)
 {
 	CharacterThrowState = ECharacterThrowState::Attached;
@@ -416,25 +444,28 @@ void ATantrumnCharacterBase::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedCo
 
 			GetOverlappingActors(OverlappingActors);
 
-			AActor* ClosestActor = OverlappingActors[0];
-
-			for (auto CurrentActor : OverlappingActors)
+			if (OverlappingActors.Num() > 0)
 			{
-				if (GetDistanceTo(CurrentActor) < GetDistanceTo(ClosestActor))
+				AActor* ClosestActor = OverlappingActors[0];
+
+				for (auto CurrentActor : OverlappingActors)
 				{
-					ClosestActor = CurrentActor;
+					if (GetDistanceTo(CurrentActor) < GetDistanceTo(ClosestActor))
+					{
+						ClosestActor = CurrentActor;
+					}
 				}
-			}
 
-			if (Interface)
-			{
-				Interface->HideInteractionWidget();
-			}
+				if (Interface)
+				{
+					Interface->HideInteractionWidget();
+				}
 
-			Interface = Cast<IInteractionInterface>(ClosestActor);
-			if (Interface)
-			{
-				Interface->ShowInteractionWidget();
+				Interface = Cast<IInteractionInterface>(ClosestActor);
+				if (Interface)
+				{
+					Interface->ShowInteractionWidget();
+				}
 			}
 		}
 }
@@ -445,6 +476,41 @@ void ATantrumnCharacterBase::OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp
 	{
 		Interface->HideInteractionWidget();
 		Interface = nullptr;
+	}
+}
+
+void ATantrumnCharacterBase::ApplyEffect_Implementation(EEffectType EffectType, bool bIsBuff)
+{
+	if (bIsUnderEffect)
+	{
+		return;
+	}
+
+	CurrentEffect = EffectType;
+	bIsUnderEffect = true;
+	bIsEffectBuff = bIsBuff;
+
+	switch (CurrentEffect)
+	{
+		case EEffectType::Speed:
+			bIsEffectBuff ? SprintSpeed *= 2 : GetCharacterMovement()->DisableMovement();
+			break;
+		default:
+			break;
+	}
+}
+
+void ATantrumnCharacterBase::EndEffect()
+{
+	bIsUnderEffect = false;
+
+	switch (CurrentEffect)
+	{
+		case EEffectType::Speed :
+			bIsEffectBuff ? SprintSpeed /= 2, RequestSprintEnd() : GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			break;
+		default:
+			break;
 	}
 }
 

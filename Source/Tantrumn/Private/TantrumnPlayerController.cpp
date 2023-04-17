@@ -23,11 +23,6 @@ void ATantrumnPlayerController::BeginPlay()
 	//		HUDWidget->AddToViewport();
 	//	}
 	//}
-
-	if (GetCharacter())
-	{
-		DefaultWalkSpeed = GetCharacter()->GetCharacterMovement()->MaxWalkSpeed;
-	}
 }
 
 void ATantrumnPlayerController::SetupInputComponent()
@@ -64,6 +59,9 @@ void ATantrumnPlayerController::SetupInputComponent()
 		InputComponent->BindAction(TEXT("PullObject"), EInputEvent::IE_Released, this, &ATantrumnPlayerController::RequestPullObjectStop);
 
 		InputComponent->BindAction(TEXT("ThrowObject"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestThrowObject);
+
+		// Use object
+		InputComponent->BindAction(TEXT("UseObject"), EInputEvent::IE_Pressed, this, &ATantrumnPlayerController::RequestUseObject);
 	}
 }
 
@@ -121,17 +119,17 @@ void ATantrumnPlayerController::RequestSprintStart()
 		return;
 	}
 
-	if (GetCharacter())
+	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
 	{
-		GetCharacter()->GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+		TantrumnCharacterBase->RequestSprintStart();
 	}
 }
 
 void ATantrumnPlayerController::RequestSprintStop()
 {
-	if (GetCharacter())
+	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
 	{
-		GetCharacter()->GetCharacterMovement()->MaxWalkSpeed = DefaultWalkSpeed;
+		TantrumnCharacterBase->RequestSprintEnd();
 	}
 }
 
@@ -188,6 +186,14 @@ void ATantrumnPlayerController::RequestThrowObject()
 	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
 	{
 		TantrumnCharacterBase->RequestThrowObject();
+	}
+}
+
+void ATantrumnPlayerController::RequestUseObject()
+{
+	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
+	{
+		TantrumnCharacterBase->RequestUseObject();
 	}
 }
 

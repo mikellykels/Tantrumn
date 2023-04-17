@@ -25,7 +25,7 @@ enum class ECharacterThrowState : uint8
 };
 
 UCLASS()
-class TANTRUMN_API ATantrumnCharacterBase : public ACharacter
+class TANTRUMN_API ATantrumnCharacterBase : public ACharacter, public IInteractionInterface
 {
 	GENERATED_BODY()
 
@@ -119,6 +119,8 @@ public:
 	void RequestPullObjectStop();
 	void ResetThrowableObject();
 
+	void RequestUseObject();
+
 	void OnThrowableAttached(AThrowableActor* InThrowableActor);
 
 	void SphereCastPlayerView();
@@ -182,4 +184,16 @@ private:
 
 	UFUNCTION()
 	void OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	void ApplyEffect_Implementation(EEffectType EffectType, bool bIsBuff) override;
+
+	void EndEffect();
+
+	bool bIsUnderEffect = false;
+	bool bIsEffectBuff = false;
+
+	float DefaultEffectCooldown = 5.0f;
+	float EffectCooldown = 0.0f;
+
+	EEffectType CurrentEffect = EEffectType::None;
 };
