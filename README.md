@@ -7,4 +7,5 @@
 - Week 4: Throw Feature  
 - Week 5: Game Loop  
 - Week 6: Intro to AI  
-- Week 7: Expanding on AI
+- Week 7: Expanding on AI  
+- Week 8: Interfaces and Data Tables
