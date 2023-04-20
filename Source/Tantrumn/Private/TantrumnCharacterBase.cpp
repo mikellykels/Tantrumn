@@ -3,6 +3,7 @@
 
 #include "TantrumnCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/TextBlock.h"
@@ -92,6 +93,51 @@ void ATantrumnCharacterBase::DisplayEquippedName()
 		{
 			FString Name = GetNameInterface->GetName();
 			EquippedNameWidget->EquippedName->SetText(FText::FromString(Name));
+		}
+	}
+}
+
+void ATantrumnCharacterBase::RemoveEquippedName()
+{
+	EquippedNameWidget->RemoveFromParent();
+}
+
+void ATantrumnCharacterBase::ApplyPowerEffect()
+{
+	ThrowSpeed *= 10;
+	TArray<AActor*> ThrowableActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AThrowableActor::StaticClass(), ThrowableActors);
+
+	for (AActor* Throwable : ThrowableActors)
+	{
+		AThrowableActor* ThrowableActorCast = Cast<AThrowableActor>(Throwable);
+		if (ThrowableActorCast)
+		{
+			ThrowableActorCast->ProjectileMovementComponent->MaxSpeed = 10000;
+		}
+		else
+		{
+			GetCharacterMovement()->DisableMovement();
+		}
+	}
+}
+
+void ATantrumnCharacterBase::EndPowerEffect()
+{
+	ThrowSpeed /= 10;
+	TArray<AActor*> ThrowableActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AThrowableActor::StaticClass(), ThrowableActors);
+
+	for (AActor* Throwable : ThrowableActors)
+	{
+		AThrowableActor* ThrowableActorCast = Cast<AThrowableActor>(Throwable);
+		if (ThrowableActorCast)
+		{
+			ThrowableActorCast->ProjectileMovementComponent->MaxSpeed = ThrowSpeed;
+		}
+		else
+		{
+			GetCharacterMovement()->DisableMovement();
 		}
 	}
 }
@@ -209,6 +255,20 @@ void ATantrumnCharacterBase::RequestSprintEnd()
 	GetCharacterMovement()->MaxWalkSpeed = MaxWalkSpeed;
 }
 
+void ATantrumnCharacterBase::RequestJumpStart()
+{
+	if (!bIsStunned)
+	{
+		GetCharacterMovement()->JumpZVelocity = JumpHeight;
+		GetController()->GetCharacter()->Jump();
+	}
+}
+
+void ATantrumnCharacterBase::RequestJumpStop()
+{
+	GetController()->GetCharacter()->StopJumping();
+}
+
 void ATantrumnCharacterBase::OnStunBegin(float StunRatio)
 {
 	if (bIsStunned)
@@ -312,6 +372,7 @@ void ATantrumnCharacterBase::RequestUseObject()
 	ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
 	ThrowableActor->Destroy();
 	ResetThrowableObject();
+	RemoveEquippedName();
 }
 
 void ATantrumnCharacterBase::OnThrowableAttached(AThrowableActor* InThrowableActor)
@@ -495,6 +556,15 @@ void ATantrumnCharacterBase::ApplyEffect_Implementation(EEffectType EffectType, 
 		case EEffectType::Speed:
 			bIsEffectBuff ? SprintSpeed *= 2 : GetCharacterMovement()->DisableMovement();
 			break;
+		case EEffectType::Jump:
+			bIsEffectBuff ? JumpHeight *= 3 : GetCharacterMovement()->DisableMovement();
+			break;
+		case EEffectType::Power:
+			if (bIsEffectBuff)
+			{
+				ApplyPowerEffect();
+			}
+			break;
 		default:
 			break;
 	}
@@ -508,6 +578,15 @@ void ATantrumnCharacterBase::EndEffect()
 	{
 		case EEffectType::Speed :
 			bIsEffectBuff ? SprintSpeed /= 2, RequestSprintEnd() : GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			break;
+		case EEffectType::Jump:
+			bIsEffectBuff ? JumpHeight /=3, RequestJumpStop() : GetCharacterMovement()->DisableMovement();
+			break;
+		case EEffectType::Power:
+			if (bIsEffectBuff)
+			{
+				EndPowerEffect();
+			}
 			break;
 		default:
 			break;

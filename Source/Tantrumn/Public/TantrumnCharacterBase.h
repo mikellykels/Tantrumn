@@ -40,6 +40,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Movement")
 	float SprintSpeed = 1200.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float JumpHeight = 350.0f;
+
 	UPROPERTY(EditAnywhere, Category = "Fall Impact")
 	float MinImpactSpeed = 600.0f;
 
@@ -97,6 +100,10 @@ protected:
 
 	void DisplayEquippedWidget();
 	void DisplayEquippedName();
+	void RemoveEquippedName();
+
+	void ApplyPowerEffect();
+	void EndPowerEffect();
 
 	FOnMontageBlendingOutStarted BlendingOutDelegate;
 	FOnMontageEnded MontageEndedDelegate;
@@ -112,6 +119,10 @@ public:
 
 	void RequestSprintStart();
 	void RequestSprintEnd();
+
+	void RequestJumpStart();
+	void RequestJumpStop();
+
 	void Fire();
 
 	void RequestThrowObject();
@@ -192,7 +203,7 @@ private:
 	bool bIsUnderEffect = false;
 	bool bIsEffectBuff = false;
 
-	float DefaultEffectCooldown = 5.0f;
+	float DefaultEffectCooldown = 10.0f;
 	float EffectCooldown = 0.0f;
 
 	EEffectType CurrentEffect = EEffectType::None;

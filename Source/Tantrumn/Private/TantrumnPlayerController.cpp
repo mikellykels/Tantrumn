@@ -72,17 +72,17 @@ void ATantrumnPlayerController::RequestJumpStart()
 		return;
 	}
 
-	if (GetCharacter())
+	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
 	{
-		GetCharacter()->Jump();
+		TantrumnCharacterBase->RequestJumpStart();
 	}
 }
 
 void ATantrumnPlayerController::RequestJumpStop()
 {
-	if (GetCharacter())
+	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
 	{
-		GetCharacter()->StopJumping();
+		TantrumnCharacterBase->RequestJumpStop();
 	}
 }
 

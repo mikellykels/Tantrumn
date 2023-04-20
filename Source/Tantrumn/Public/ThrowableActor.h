@@ -44,6 +44,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	FString Name = "Throwable Actor";
 
+	UPROPERTY(EditAnywhere)
+	UProjectileMovementComponent* ProjectileMovementComponent;
+
 	virtual FString GetName() { return Name; };
 
 	EEffectType GetEffectType();
@@ -72,9 +75,6 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* StaticMeshComponent;
-
-	UPROPERTY(EditAnywhere)
-	UProjectileMovementComponent* ProjectileMovementComponent;
 
 	UPROPERTY()
 	AActor* PullActor = nullptr;
