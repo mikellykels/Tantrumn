@@ -66,6 +66,8 @@ void ATantrumnCharacterBase::BeginPlay()
 	
 	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxBeginOverlap);
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxEndOverlap);
+
+	DisplayEquippedWidget();
 }
 
 void ATantrumnCharacterBase::DisplayEquippedWidget()
@@ -97,9 +99,33 @@ void ATantrumnCharacterBase::DisplayEquippedName()
 	}
 }
 
-void ATantrumnCharacterBase::RemoveEquippedName()
+void ATantrumnCharacterBase::DisplayBuffName(AThrowableActor* InThrowableActor)
+{
+	ThrowableActor = InThrowableActor;
+	GetNameInterface = Cast<IGetNameInterface>(ThrowableActor);
+	if (GetNameInterface)
+	{
+		if (ThrowableActor->GetClass()->ImplementsInterface(UGetNameInterface::StaticClass()))
+		{
+			FString Name = GetNameInterface->GetName();
+			EquippedNameWidget->BuffName->SetText(FText::FromString(Name));
+		}
+	}
+}
+
+void ATantrumnCharacterBase::RemoveEquippedWidget()
 {
 	EquippedNameWidget->RemoveFromParent();
+}
+
+void ATantrumnCharacterBase::RemoveEquippedName()
+{
+	EquippedNameWidget->EquippedName->SetText(FText::FromString(""));
+}
+
+void ATantrumnCharacterBase::RemoveBuffName()
+{
+	EquippedNameWidget->BuffName->SetText(FText::FromString(""));
 }
 
 void ATantrumnCharacterBase::ApplyPowerEffect()
@@ -114,10 +140,6 @@ void ATantrumnCharacterBase::ApplyPowerEffect()
 		if (ThrowableActorCast)
 		{
 			ThrowableActorCast->ProjectileMovementComponent->MaxSpeed = 10000;
-		}
-		else
-		{
-			GetCharacterMovement()->DisableMovement();
 		}
 	}
 }
@@ -134,10 +156,6 @@ void ATantrumnCharacterBase::EndPowerEffect()
 		if (ThrowableActorCast)
 		{
 			ThrowableActorCast->ProjectileMovementComponent->MaxSpeed = ThrowSpeed;
-		}
-		else
-		{
-			GetCharacterMovement()->DisableMovement();
 		}
 	}
 }
@@ -329,7 +347,7 @@ void ATantrumnCharacterBase::RequestThrowObject()
 		{
 			CharacterThrowState = ECharacterThrowState::Throwing;
 			bIsThrowableActorAttached = false;
-			EquippedNameWidget->RemoveFromViewport();
+			RemoveEquippedName();
 		}
 		else
 		{
@@ -369,10 +387,17 @@ void ATantrumnCharacterBase::ResetThrowableObject()
 
 void ATantrumnCharacterBase::RequestUseObject()
 {
-	ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
-	ThrowableActor->Destroy();
-	ResetThrowableObject();
-	RemoveEquippedName();
+	if (!bIsUnderEffect && ThrowableActor->GetEffectType() != EEffectType::None)
+	{
+		CharacterThrowState = ECharacterThrowState::None;
+
+		RemoveEquippedName();
+		DisplayBuffName(ThrowableActor);
+
+		ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
+		ThrowableActor->Destroy();
+		ResetThrowableObject();
+	}
 }
 
 void ATantrumnCharacterBase::OnThrowableAttached(AThrowableActor* InThrowableActor)
@@ -381,7 +406,6 @@ void ATantrumnCharacterBase::OnThrowableAttached(AThrowableActor* InThrowableAct
 	bIsThrowableActorAttached = true;
 	ThrowableActor = InThrowableActor;
 	MoveIgnoreActorAdd(ThrowableActor);
-	DisplayEquippedWidget();
 	DisplayEquippedName();
 }
 
@@ -564,6 +588,10 @@ void ATantrumnCharacterBase::ApplyEffect_Implementation(EEffectType EffectType, 
 			{
 				ApplyPowerEffect();
 			}
+			else
+			{
+				GetCharacterMovement()->DisableMovement();
+			}
 			break;
 		default:
 			break;
@@ -573,6 +601,7 @@ void ATantrumnCharacterBase::ApplyEffect_Implementation(EEffectType EffectType, 
 void ATantrumnCharacterBase::EndEffect()
 {
 	bIsUnderEffect = false;
+	RemoveBuffName();
 
 	switch (CurrentEffect)
 	{
@@ -586,6 +615,10 @@ void ATantrumnCharacterBase::EndEffect()
 			if (bIsEffectBuff)
 			{
 				EndPowerEffect();
+			}
+			else
+			{
+				GetCharacterMovement()->DisableMovement();
 			}
 			break;
 		default:

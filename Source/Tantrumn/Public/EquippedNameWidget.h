@@ -19,5 +19,8 @@ class TANTRUMN_API UEquippedNameWidget : public UUserWidget
 public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* EquippedName;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* BuffName;
 	
 };

@@ -100,7 +100,11 @@ protected:
 
 	void DisplayEquippedWidget();
 	void DisplayEquippedName();
+	void DisplayBuffName(AThrowableActor* InThrowableActor);
+
+	void RemoveEquippedWidget();
 	void RemoveEquippedName();
+	void RemoveBuffName();
 
 	void ApplyPowerEffect();
 	void EndPowerEffect();
