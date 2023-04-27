@@ -21,6 +21,8 @@ class TANTRUMN_API ATantrumnPlayerController : public APlayerController
 public:
 	
 	virtual void BeginPlay() override;
+	//in local mp we need to make sure the controller has received the player in order to correctly set up the hud
+	virtual void ReceivedPlayer() override;
 
 protected:
 	void SetupInputComponent() override;
@@ -51,11 +53,11 @@ protected:
 
 	void OnPauseGame();
 
-	//UPROPERTY(EditAnywhere, Category = "HUD")
-	//TSubclassOf<class UUserWidget> HUDClass;
+	UPROPERTY(EditAnywhere, Category = "HUD")
+	TSubclassOf<class UUserWidget> HUDClass;
 
-	//UPROPERTY()
-	//UUserWidget* HUDWidget;
+	UPROPERTY()
+	UUserWidget* HUDWidget;
 
 	// Base lookup rate, in deg/sec. Other scaling may affect final lookup rate
 	UPROPERTY(EditAnywhere, Category = "Look")

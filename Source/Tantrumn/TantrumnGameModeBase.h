@@ -34,12 +34,14 @@ public:
 	ATantrumnGameModeBase();
 
 	virtual void BeginPlay() override;
+	virtual void RestartPlayer(AController* NewPlayer) override;
 
 	UFUNCTION(BlueprintCallable)
 	EGameState GetCurrentGameState() const;
 
-	void PlayerReachedEnd();
-	void PlayerPausedGame();
+	void PlayerReachedEnd(APlayerController* PlayerController);
+	void ReceivePlayer(APlayerController* PlayerController);
+	void PlayerPausedGame(APlayerController* PlayerController);
 
 	UFUNCTION(BlueprintCallable)
 	void PlayerResumedGame();
@@ -52,27 +54,36 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "States")
 	EGameState CurrentGameState = EGameState::NONE;
 	// Countdown before gameplay state begins. Exposed so we can easily change this in BP editor.
-	UPROPERTY(EditAnywhere, Category = "GameDetails")
+	UPROPERTY(EditAnywhere, Category = "Game Details")
 	float GameCountdownDuration = 3.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Game Details")
+	uint8 NumExpectedPlayers = 1u;
+
+	UFUNCTION(BlueprintCallable, Category = "Game Details")
+	void SetNumExpectedPlayers(uint8 InNumExpectedPlayers)
+	{
+		NumExpectedPlayers = InNumExpectedPlayers;
+	}
 
 	FTimerHandle TimerHandle;
 
+	// object we'll be creating and adding to the viewport
 	UPROPERTY()
-	UTantrumnGameWidget* GameWidget;
+	TMap<APlayerController*, UTantrumnGameWidget*> GameWidgets;
 
 	UPROPERTY(EditAnywhere, Category = "Widget")
 	TSubclassOf<UTantrumnGameWidget> GameWidgetClass;
 
 	UPROPERTY()
-	UTantrumnPausedWidget* PausedWidget;
+	TMap<APlayerController*, UTantrumnPausedWidget*> PausedWidgets;
 
 	UPROPERTY(EditAnywhere, Category = "Widget")
 	TSubclassOf<UTantrumnPausedWidget> PausedWidgetClass;
 
-	APlayerController* PC = nullptr;
-
 	// --- FUNCTIONS --- //
 
+	void AttemptStartGame();
 	void DisplayCountdown();
 	void StartGame();
 	void DisplayPausedMenu();

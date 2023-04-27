@@ -12,17 +12,27 @@
 void ATantrumnPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
-	GameModeRef = Cast<ATantrumnGameModeBase>(GetWorld()->GetAuthGameMode());
+void ATantrumnPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer();
 
-	//if (HUDClass)
-	//{
-	//	HUDWidget = CreateWidget(this, HUDClass);
-	//	if (HUDWidget)
-	//	{
-	//		HUDWidget->AddToViewport();
-	//	}
-	//}
+	GameModeRef = GetWorld()->GetAuthGameMode<ATantrumnGameModeBase>();
+	if (ensureMsgf(GameModeRef, TEXT("ATantrumnPlayerController::ReceivedPlayer missing GameMode Reference")))
+	{
+		GameModeRef->ReceivePlayer(this);
+	}
+
+	if (HUDClass)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("HUD"));
+		HUDWidget = CreateWidget(this, HUDClass);
+		if (HUDWidget)
+		{
+			HUDWidget->AddToPlayerScreen();
+		}
+	}
 }
 
 void ATantrumnPlayerController::SetupInputComponent()
@@ -241,7 +251,7 @@ void ATantrumnPlayerController::OnPauseGame()
 		return;
 	}
 
-	GameModeRef->PlayerPausedGame();
+	GameModeRef->PlayerPausedGame(this);
 }
 
 

@@ -70,6 +70,11 @@ protected:
 	void OnStunEnd();
 	void UpdateStun();
 
+	void UpdateRescue(float DeltaTime);
+	void StartRescue();
+	void EndRescue();
+
+
 	bool PlayThrowMontage();
 
 	void UnbindMontage();
@@ -86,8 +91,11 @@ protected:
 	UFUNCTION()
 	void OnNotifyEndRecieved(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointNotifyPayload);
 
-	UPROPERTY(VisibleAnywhere, Category = "Throw")
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_CharacterThrowState, Category = "Throw")
 	ECharacterThrowState CharacterThrowState = ECharacterThrowState::None;
+
+	UFUNCTION()
+	void OnRep_CharacterThrowState(const ECharacterThrowState& OldCharacterThrowState);
 
 	UPROPERTY(EditAnywhere, Category = "Throw", meta = (ClampMin = "0.0", Unit = "ms"))
 	float ThrowSpeed = 2000.0f;
@@ -112,6 +120,19 @@ protected:
 	FOnMontageBlendingOutStarted BlendingOutDelegate;
 	FOnMontageEnded MontageEndedDelegate;
 
+	//handle fall out of world
+	//Last Position on World when OnGround
+	FVector LastGroundPosition = FVector::ZeroVector;
+	//Position From Player when it Hits KillZ
+	FVector FallOutOfWorldPosition = FVector::ZeroVector;
+	// Used to set a timer from Moving Player back to Ground
+	float CurrentRescueTime = 0.0f;
+	//Set to true in fell out of world
+	bool bIsPlayerBeingRescued = false;
+	//Set time that takes to put Player back in Ground
+	UPROPERTY(EditAnywhere, Category = "KillZ")
+	float TimeToRescuePlayer = 3.f;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -120,6 +141,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void Landed(const FHitResult& Hit) override;
+
+	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PreviousCustomMode = 0) override;
+	virtual void FellOutOfWorld(const class UDamageType& dmgType) override;
 
 	void RequestSprintStart();
 	void RequestSprintEnd();
@@ -145,6 +169,28 @@ public:
 	void LineCastActorTransform();
 
 	void ProcessTraceResult(const FHitResult& HitResult);
+
+	//RPC's actions that can need to be done on the server in order to replicate
+	UFUNCTION(Server, Reliable)
+	void ServerPullObject(AThrowableActor* InThrowableActor);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRequestPullObject(bool bIsPulling);
+
+	UFUNCTION(Server, Reliable)
+	void ServerRequestThrowObject();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastRequestThrowObject();
+
+	UFUNCTION(Client, Reliable)
+	void ClientThrowableAttached(AThrowableActor* InThrowableActor);
+
+	UFUNCTION(Server, Reliable)
+	void ServerBeginThrow();
+
+	UFUNCTION(Server, Reliable)
+	void ServerFinishThrow();
 
 	bool CanThrowObject() const 
 	{ 
