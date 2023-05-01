@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EquippedNameWidget.h"
 #include "GameFramework/GameModeBase.h"
+#include "GetNameInterface.h"
 #include "TantrumnGameWidget.h"
 #include "TantrumnPausedWidget.h"
+#include "ThrowableActor.h"
 #include "TantrumnGameModeBase.generated.h"
 
 /**
@@ -46,6 +49,16 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PlayerResumedGame();
 
+	void DisplayEquippedWidget();
+	void DisplayEquippedName(AThrowableActor* InThrowableActor, APlayerController* PlayerController);
+	void DisplayBuffName(AThrowableActor* InThrowableActor, APlayerController* PlayerController);
+
+	void RemoveEquippedWidget(APlayerController* PlayerController);
+	void RemoveEquippedName(APlayerController* PlayerController);
+	void RemoveBuffName(APlayerController* PlayerController);
+
+	IGetNameInterface* GetNameInterface;
+
 private:
 
 	// --- VARS --- //
@@ -66,6 +79,9 @@ private:
 		NumExpectedPlayers = InNumExpectedPlayers;
 	}
 
+	UPROPERTY()
+	AThrowableActor* ThrowableActor;
+
 	FTimerHandle TimerHandle;
 
 	// object we'll be creating and adding to the viewport
@@ -80,6 +96,12 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Widget")
 	TSubclassOf<UTantrumnPausedWidget> PausedWidgetClass;
+
+	UPROPERTY()
+	TMap <APlayerController*, UEquippedNameWidget*> EquippedNameWidgets;
+
+	UPROPERTY(EditAnywhere, Category = "HUD")
+	TSubclassOf<UEquippedNameWidget> EquippedNameWidgetClass;
 
 	// --- FUNCTIONS --- //
 

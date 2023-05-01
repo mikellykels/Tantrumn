@@ -5,7 +5,7 @@
 
 // Add default functionality here for any IGetNameInterface functions that are not pure virtual.
 
-FString IGetNameInterface::GetName()
+FText IGetNameInterface::GetName()
 {
-	return FString();
+	return FText();
 }

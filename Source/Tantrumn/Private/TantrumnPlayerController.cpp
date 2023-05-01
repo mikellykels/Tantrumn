@@ -26,7 +26,7 @@ void ATantrumnPlayerController::ReceivedPlayer()
 
 	if (HUDClass)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("HUD"));
+		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("HUD"));
 		HUDWidget = CreateWidget(this, HUDClass);
 		if (HUDWidget)
 		{

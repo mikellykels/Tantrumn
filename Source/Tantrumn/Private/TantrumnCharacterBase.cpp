@@ -15,6 +15,8 @@
 #include "Net/UnrealNetwork.h"
 #include "ThrowableActor.h"
 
+#include "../TantrumnGameModeBase.h"
+
 constexpr int CVSphereCastPlayerView = 0;
 constexpr int CVSphereCastActorTransform = 1;
 constexpr int CVLineCastActorTransform = 2;
@@ -82,65 +84,7 @@ void ATantrumnCharacterBase::BeginPlay()
 	InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxBeginOverlap);
 	InteractionBox->OnComponentEndOverlap.AddDynamic(this, &ATantrumnCharacterBase::OnBoxEndOverlap);
 
-	DisplayEquippedWidget();
-}
-
-void ATantrumnCharacterBase::DisplayEquippedWidget()
-{
-	if (IsValid(EquippedNameWidgetClass))
-	{
-		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-		EquippedNameWidget = CreateWidget<UEquippedNameWidget>(PlayerController, EquippedNameWidgetClass);
-		if (EquippedNameWidget)
-		{
-			EquippedNameWidget->AddToViewport();
-		}
-	}
-}
-
-void ATantrumnCharacterBase::DisplayEquippedName()
-{
-	TArray<AActor*> AttachedActors;
-	GetAttachedActors(AttachedActors);
-	AActor* AttachedActor = AttachedActors[0];
-	GetNameInterface = Cast<IGetNameInterface>(AttachedActor);
-	if (GetNameInterface)
-	{
-		if (AttachedActor->GetClass()->ImplementsInterface(UGetNameInterface::StaticClass()))
-		{
-			FString Name = GetNameInterface->GetName();
-			EquippedNameWidget->EquippedName->SetText(FText::FromString(Name));
-		}
-	}
-}
-
-void ATantrumnCharacterBase::DisplayBuffName(AThrowableActor* InThrowableActor)
-{
-	ThrowableActor = InThrowableActor;
-	GetNameInterface = Cast<IGetNameInterface>(ThrowableActor);
-	if (GetNameInterface)
-	{
-		if (ThrowableActor->GetClass()->ImplementsInterface(UGetNameInterface::StaticClass()))
-		{
-			FString Name = GetNameInterface->GetName();
-			EquippedNameWidget->BuffName->SetText(FText::FromString(Name));
-		}
-	}
-}
-
-void ATantrumnCharacterBase::RemoveEquippedWidget()
-{
-	EquippedNameWidget->RemoveFromParent();
-}
-
-void ATantrumnCharacterBase::RemoveEquippedName()
-{
-	EquippedNameWidget->EquippedName->SetText(FText::FromString(""));
-}
-
-void ATantrumnCharacterBase::RemoveBuffName()
-{
-	EquippedNameWidget->BuffName->SetText(FText::FromString(""));
+	GameModeRef = GetWorld()->GetAuthGameMode<ATantrumnGameModeBase>();
 }
 
 void ATantrumnCharacterBase::ApplyPowerEffect()
@@ -425,7 +369,9 @@ void ATantrumnCharacterBase::RequestThrowObject()
 			CharacterThrowState = ECharacterThrowState::Throwing;
 			ServerRequestThrowObject();
 			bIsThrowableActorAttached = false;
-			RemoveEquippedName();
+
+			APlayerController* PlayerController = GetController<APlayerController>();
+			GameModeRef->RemoveEquippedName(PlayerController);
 		}
 		else
 		{
@@ -470,9 +416,9 @@ void ATantrumnCharacterBase::RequestUseObject()
 	if (!bIsUnderEffect && ThrowableActor->GetEffectType() != EEffectType::None)
 	{
 		CharacterThrowState = ECharacterThrowState::None;
-
-		RemoveEquippedName();
-		DisplayBuffName(ThrowableActor);
+		APlayerController* PlayerController = GetController<APlayerController>();
+		GameModeRef->RemoveEquippedName(PlayerController);
+		GameModeRef->DisplayBuffName(ThrowableActor, PlayerController);
 
 		ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
 		ThrowableActor->Destroy();
@@ -487,7 +433,9 @@ void ATantrumnCharacterBase::OnThrowableAttached(AThrowableActor* InThrowableAct
 	ThrowableActor = InThrowableActor;
 	MoveIgnoreActorAdd(ThrowableActor);
 	ClientThrowableAttached(InThrowableActor);
-	DisplayEquippedName();
+
+	APlayerController* PlayerController = GetController<APlayerController>();
+	GameModeRef->DisplayEquippedName(ThrowableActor, PlayerController);
 }
 
 void ATantrumnCharacterBase::SphereCastPlayerView()
@@ -690,8 +638,8 @@ void ATantrumnCharacterBase::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedCo
 {
 		if (OtherActor->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass()))
 		{
+			APlayerController* PlayerController = GetController<APlayerController>();
 			TArray<AActor*> OverlappingActors;
-
 			GetOverlappingActors(OverlappingActors);
 
 			if (OverlappingActors.Num() > 0)
@@ -714,6 +662,7 @@ void ATantrumnCharacterBase::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedCo
 				Interface = Cast<IInteractionInterface>(ClosestActor);
 				if (Interface)
 				{
+					GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Show Interaction"));
 					Interface->ShowInteractionWidget();
 				}
 			}
@@ -766,7 +715,8 @@ void ATantrumnCharacterBase::ApplyEffect_Implementation(EEffectType EffectType, 
 void ATantrumnCharacterBase::EndEffect()
 {
 	bIsUnderEffect = false;
-	RemoveBuffName();
+	APlayerController* PlayerController = GetController<APlayerController>();
+	GameModeRef->RemoveBuffName(PlayerController);
 
 	switch (CurrentEffect)
 	{

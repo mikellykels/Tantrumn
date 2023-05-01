@@ -42,12 +42,12 @@ public:
 	void ToggleHighlight(bool bIsOn);
 
 	UPROPERTY(EditAnywhere)
-	FString Name = "Throwable Actor";
+	FText Name;
 
 	UPROPERTY(EditAnywhere)
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
-	virtual FString GetName() { return Name; };
+	virtual FText GetName() { return Name; };
 
 	EEffectType GetEffectType();
 

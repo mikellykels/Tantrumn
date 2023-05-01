@@ -3,6 +3,7 @@
 
 #include "TantrumnGameModeBase.h"
 #include "TantrumnGameWidget.h"
+#include "Components/TextBlock.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -17,8 +18,6 @@ void ATantrumnGameModeBase::BeginPlay()
 	Super::BeginPlay();
 
 	CurrentGameState = EGameState::Waiting;
-	//DisplayCountdown();
-	//GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &ATantrumnGameModeBase::StartGame, GameCountdownDuration, false);
 }
 
 void ATantrumnGameModeBase::RestartPlayer(AController* NewPlayer)
@@ -76,6 +75,7 @@ void ATantrumnGameModeBase::PlayerPausedGame(APlayerController* PlayerController
 
 		PlayerController->SetInputMode(FInputModeUIOnly());
 		PlayerController->SetShowMouseCursor(true);
+		(*GameWidget)->SetKeyboardFocus();
 
 		(*GameWidget)->SetVisibility(ESlateVisibility::Hidden);
 	}
@@ -111,6 +111,7 @@ void ATantrumnGameModeBase::AttemptStartGame()
 	if (GetNumPlayers() == NumExpectedPlayers)
 	{
 		DisplayCountdown();
+		DisplayEquippedWidget();
 		if (GameCountdownDuration > SMALL_NUMBER)
 		{
 			GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &ATantrumnGameModeBase::StartGame, GameCountdownDuration, false);
@@ -126,7 +127,6 @@ void ATantrumnGameModeBase::DisplayCountdown()
 {
 	if (!GameWidgetClass)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("!GameWidgetClass"));
 		return;
 	}
 
@@ -137,7 +137,6 @@ void ATantrumnGameModeBase::DisplayCountdown()
 		{
 			if (UTantrumnGameWidget* GameWidget = CreateWidget<UTantrumnGameWidget>(PlayerController, GameWidgetClass))
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Add"));
 				GameWidget->AddToPlayerScreen();
 				GameWidget->StartCountdown(GameCountdownDuration, this);
 				GameWidgets.Add(PlayerController, GameWidget);
@@ -180,5 +179,94 @@ void ATantrumnGameModeBase::DisplayPausedMenu()
 				PausedWidgets.Add(PlayerController, PausedWidget);
 			}
 		}
+	}
+}
+
+void ATantrumnGameModeBase::DisplayEquippedWidget()
+{
+	if (!EquippedNameWidgetClass)
+	{
+		return;
+	}
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		APlayerController* PlayerController = Iterator->Get();
+		if (PlayerController && PlayerController->PlayerState && !MustSpectate(PlayerController))
+		{
+			if (UEquippedNameWidget* EquippedNameWidget = CreateWidget<UEquippedNameWidget>(PlayerController, EquippedNameWidgetClass))
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("EquippedWidget"));
+				EquippedNameWidget->AddToPlayerScreen();
+				EquippedNameWidgets.Add(PlayerController, EquippedNameWidget);
+			}
+		}
+	}
+}
+
+void ATantrumnGameModeBase::DisplayEquippedName(AThrowableActor* InThrowableActor, APlayerController* PlayerController)
+{
+	ThrowableActor = InThrowableActor;
+	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
+
+	if (EquippedNameWidget)
+	{
+		GetNameInterface = Cast<IGetNameInterface>(ThrowableActor);
+		if (GetNameInterface)
+		{
+			if (ThrowableActor->GetClass()->ImplementsInterface(UGetNameInterface::StaticClass()))
+			{
+				FText Name = GetNameInterface->GetName();
+				(*EquippedNameWidget)->EquippedName->SetText(Name);
+			}
+		}
+	}
+}
+
+void ATantrumnGameModeBase::DisplayBuffName(AThrowableActor* InThrowableActor, APlayerController* PlayerController)
+{
+	ThrowableActor = InThrowableActor;
+	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
+
+	if (EquippedNameWidget)
+	{
+		GetNameInterface = Cast<IGetNameInterface>(ThrowableActor);
+		if (GetNameInterface)
+		{
+			if (ThrowableActor->GetClass()->ImplementsInterface(UGetNameInterface::StaticClass()))
+			{
+				FText Name = GetNameInterface->GetName();
+				(*EquippedNameWidget)->BuffName->SetText(Name);
+			}
+		}
+	}
+}
+
+void ATantrumnGameModeBase::RemoveEquippedWidget(APlayerController* PlayerController)
+{
+	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
+
+	if (EquippedNameWidget)
+	{
+		(*EquippedNameWidget)->RemoveFromParent();
+	}
+}
+
+void ATantrumnGameModeBase::RemoveEquippedName(APlayerController* PlayerController)
+{
+	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
+
+	if (EquippedNameWidget)
+	{
+		(*EquippedNameWidget)->EquippedName->SetText(FText::FromString(""));
+	}
+}
+
+void ATantrumnGameModeBase::RemoveBuffName(APlayerController* PlayerController)
+{
+	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
+
+	if (EquippedNameWidget)
+	{
+		(*EquippedNameWidget)->BuffName->SetText(FText::FromString(""));
 	}
 }

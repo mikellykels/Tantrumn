@@ -6,13 +6,11 @@
 #include "GameFramework/Character.h"
 #include "Components/BoxComponent.h"
 #include "InteractionInterface.h"
-#include "GetNameInterface.h"
 #include "ThrowableActor.h"
-#include "EquippedNameWidget.h"
 #include "Sound/SoundCue.h"
 #include "TantrumnCharacterBase.generated.h"
 
-class UUserWidget;
+class ATantrumnGameModeBase;
 
 UENUM(BlueprintType)
 enum class ECharacterThrowState : uint8
@@ -105,14 +103,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* InteractionBox;
-
-	void DisplayEquippedWidget();
-	void DisplayEquippedName();
-	void DisplayBuffName(AThrowableActor* InThrowableActor);
-
-	void RemoveEquippedWidget();
-	void RemoveEquippedName();
-	void RemoveBuffName();
 
 	void ApplyPowerEffect();
 	void EndPowerEffect();
@@ -222,17 +212,10 @@ public:
 	}
 
 	IInteractionInterface* Interface = nullptr;
-	IGetNameInterface* GetNameInterface = nullptr;
 
 private:
 	UPROPERTY()
 	AThrowableActor* ThrowableActor;
-
-	UPROPERTY(EditAnywhere, Category = "HUD")
-	TSubclassOf<UUserWidget> EquippedNameWidgetClass = nullptr;
-
-	UPROPERTY()
-	UEquippedNameWidget* EquippedNameWidget = nullptr;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	USceneComponent* ProjectileSpawnPoint;
@@ -257,4 +240,6 @@ private:
 	float EffectCooldown = 0.0f;
 
 	EEffectType CurrentEffect = EEffectType::None;
+
+	ATantrumnGameModeBase* GameModeRef;
 };
