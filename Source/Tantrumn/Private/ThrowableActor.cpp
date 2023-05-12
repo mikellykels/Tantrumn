@@ -25,22 +25,21 @@ AThrowableActor::AThrowableActor()
 void AThrowableActor::BeginPlay()
 {
 	Super::BeginPlay();
-	ProjectileMovementComponent->OnProjectileStop.AddDynamic(this, &AThrowableActor::ProjectileStop);
-	
+
+	if (HasAuthority())
+	{
+		ProjectileMovementComponent->OnProjectileStop.AddDynamic(this, &AThrowableActor::ProjectileStop);
+	}
 }
 
 void AThrowableActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	ProjectileMovementComponent->OnProjectileStop.RemoveDynamic(this, &AThrowableActor::ProjectileStop);
+	if (HasAuthority())
+	{
+		ProjectileMovementComponent->OnProjectileStop.RemoveDynamic(this, &AThrowableActor::ProjectileStop);
+	}
 	Super::EndPlay(EndPlayReason);
 }
-
-// Called every frame
-//void AThrowableActor::Tick(float DeltaTime)
-//{
-//	Super::Tick(DeltaTime);
-//
-//}
 
 bool AThrowableActor::Pull(AActor* InActor)
 {
@@ -64,6 +63,7 @@ void AThrowableActor::Launch(const FVector& InitialVelocity, AActor* Target)
 {
 	if (State == EState::Pull || State == EState::Attached)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("LAUNCHED"));
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		ProjectileMovementComponent->Activate(true);
 		ProjectileMovementComponent->HomingTargetComponent = nullptr;
@@ -85,14 +85,17 @@ void AThrowableActor::Launch(const FVector& InitialVelocity, AActor* Target)
 
 void AThrowableActor::Drop()
 {
-	if (State == EState::Attached)
+	if (State == EState::Pull || State == EState::Attached)
 	{
-		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	}
+		if (State == EState::Attached)
+		{
+			DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		}
 
-	ProjectileMovementComponent->Activate(true);
-	ProjectileMovementComponent->HomingTargetComponent = nullptr;
-	State = EState::Dropped;
+		ProjectileMovementComponent->Activate(true);
+		ProjectileMovementComponent->HomingTargetComponent = nullptr;
+		State = EState::Dropped;
+	}
 }
 
 void AThrowableActor::ToggleHighlight(bool bIsOn)

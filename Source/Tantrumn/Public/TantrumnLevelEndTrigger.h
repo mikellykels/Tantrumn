@@ -6,12 +6,6 @@
 #include "Engine/TriggerVolume.h"
 #include "TantrumnLevelEndTrigger.generated.h"
 
-/**
- * 
- */
-
-class ATantrumnGameModeBase;
-
 UCLASS(Blueprintable, BlueprintType)
 class TANTRUMN_API ATantrumnLevelEndTrigger : public ATriggerVolume
 {
@@ -30,7 +24,5 @@ private:
 	// Custom Overlap function to override the Actor BeginOverlap version
 	UFUNCTION()
 	void OnOverlapBegin(class AActor* OverlappedActor, class AActor* OtherActor);
-
-	ATantrumnGameModeBase* GameModeRef;
 	
 };

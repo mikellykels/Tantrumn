@@ -3,7 +3,10 @@
 
 #include "TantrumnGameModeBase.h"
 #include "TantrumnGameWidget.h"
-#include "Components/TextBlock.h"
+#include "TantrumnGameInstance.h"
+#include "TantrumnGameStateBase.h"
+#include "TantrumnPlayerController.h"
+#include "TantrumnPlayerState.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -17,7 +20,10 @@ void ATantrumnGameModeBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CurrentGameState = EGameState::Waiting;
+	if (ATantrumnGameStateBase* TantrumnGameState = GetGameState<ATantrumnGameStateBase>())
+	{
+		TantrumnGameState->SetGameState(EGameState::Waiting);
+	}
 }
 
 void ATantrumnGameModeBase::RestartPlayer(AController* NewPlayer)
@@ -29,78 +35,48 @@ void ATantrumnGameModeBase::RestartPlayer(AController* NewPlayer)
 		if (PlayerController->GetCharacter() && PlayerController->GetCharacter()->GetCharacterMovement())
 		{
 			PlayerController->GetCharacter()->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			ATantrumnPlayerState* PlayerState = PlayerController->GetPlayerState<ATantrumnPlayerState>();
+			if (PlayerState)
+			{
+				PlayerState->SetCurrentState(EPlayerGameState::Waiting);
+			}
 		}
 	}
-}
-
-EGameState ATantrumnGameModeBase::GetCurrentGameState() const
-{
-	return CurrentGameState;
-}
-
-void ATantrumnGameModeBase::PlayerReachedEnd(APlayerController* PlayerController)
-{
-	CurrentGameState = EGameState::GameOver;
-	UTantrumnGameWidget** GameWidget = GameWidgets.Find(PlayerController);
-
-	if (GameWidget)
-	{
-		(*GameWidget)->LevelComplete();
-		PlayerController->SetInputMode(FInputModeUIOnly());
-		PlayerController->SetShowMouseCursor(true);
-
-		if (PlayerController->GetCharacter() && PlayerController->GetCharacter()->GetCharacterMovement())
-		{
-			PlayerController->GetCharacter()->GetCharacterMovement()->DisableMovement();
-		}
-	}
-}
-
-void ATantrumnGameModeBase::ReceivePlayer(APlayerController* PlayerController)
-{
 	AttemptStartGame();
 }
 
-void ATantrumnGameModeBase::PlayerPausedGame(APlayerController* PlayerController)
+void ATantrumnGameModeBase::RestartGame()
 {
-	CurrentGameState = EGameState::Paused;
-
-	UTantrumnGameWidget** GameWidget = GameWidgets.Find(PlayerController);
-
-	DisplayPausedMenu();
-
-	if (GameWidget)
-	{
-		UGameplayStatics::SetGamePaused(GetWorld(), true);
-
-		PlayerController->SetInputMode(FInputModeUIOnly());
-		PlayerController->SetShowMouseCursor(true);
-		(*GameWidget)->SetKeyboardFocus();
-
-		(*GameWidget)->SetVisibility(ESlateVisibility::Hidden);
-	}
-}
-
-void ATantrumnGameModeBase::PlayerResumedGame()
-{
-	CurrentGameState = EGameState::Playing;
-	UGameplayStatics::SetGamePaused(GetWorld(), false);
-
+	ResetLevel();
+	//RestartGame();
+	//GetWorld()->ServerTravel(TEXT("?Restart"), false);
+	//ProcessServerTravel("?Restart");
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		APlayerController* PlayerController = Iterator->Get();
 		if (PlayerController && PlayerController->PlayerState && !MustSpectate(PlayerController))
 		{
-			UTantrumnGameWidget** GameWidget = GameWidgets.Find(PlayerController);
-			UTantrumnPausedWidget** PausedWidget = PausedWidgets.Find(PlayerController);
-
-			if (GameWidget && PausedWidget)
+			//call something to clean up the hud 
+			if (ATantrumnPlayerController* TantrumnPlayerController = Cast< ATantrumnPlayerController>(PlayerController))
 			{
-				(*PausedWidget)->RemoveFromParent();
-				PlayerController->SetInputMode(FInputModeGameOnly());
-				PlayerController->SetShowMouseCursor(false);
+				TantrumnPlayerController->ClientRestartGame();
+			}
+			RestartPlayer(PlayerController);
+		}
+	}
+}
 
-				(*GameWidget)->SetVisibility(ESlateVisibility::Visible);
+void ATantrumnGameModeBase::PauseGame()
+{
+	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+	{
+		APlayerController* PlayerController = Iterator->Get();
+		if (PlayerController && PlayerController->PlayerState && !MustSpectate(PlayerController))
+		{
+			//call something to clean up the hud 
+			if (ATantrumnPlayerController* TantrumnPlayerController = Cast< ATantrumnPlayerController>(PlayerController))
+			{
+				TantrumnPlayerController->ClientPauseGame();
 			}
 		}
 	}
@@ -108,6 +84,11 @@ void ATantrumnGameModeBase::PlayerResumedGame()
 
 void ATantrumnGameModeBase::AttemptStartGame()
 {
+	if (ATantrumnGameStateBase* TantrumnGameState = GetGameState<ATantrumnGameStateBase>())
+	{
+		TantrumnGameState->SetGameState(EGameState::Waiting);
+	}
+
 	if (GetNumPlayers() == NumExpectedPlayers)
 	{
 		DisplayCountdown();
@@ -125,21 +106,14 @@ void ATantrumnGameModeBase::AttemptStartGame()
 
 void ATantrumnGameModeBase::DisplayCountdown()
 {
-	if (!GameWidgetClass)
-	{
-		return;
-	}
-
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		APlayerController* PlayerController = Iterator->Get();
 		if (PlayerController && PlayerController->PlayerState && !MustSpectate(PlayerController))
 		{
-			if (UTantrumnGameWidget* GameWidget = CreateWidget<UTantrumnGameWidget>(PlayerController, GameWidgetClass))
+			if (ATantrumnPlayerController* TantrumnPlayerController = Cast< ATantrumnPlayerController>(PlayerController))
 			{
-				GameWidget->AddToPlayerScreen();
-				GameWidget->StartCountdown(GameCountdownDuration, this);
-				GameWidgets.Add(PlayerController, GameWidget);
+				TantrumnPlayerController->ClientDisplayCountdown(GameCountdownDuration);
 			}
 		}
 	}
@@ -147,7 +121,11 @@ void ATantrumnGameModeBase::DisplayCountdown()
 
 void ATantrumnGameModeBase::StartGame()
 {
-	CurrentGameState = EGameState::Playing;
+	if (ATantrumnGameStateBase* TantrumnGameState = GetGameState<ATantrumnGameStateBase>())
+	{
+		TantrumnGameState->SetGameState(EGameState::Playing);
+		TantrumnGameState->ClearResults();
+	}
 
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
@@ -156,27 +134,12 @@ void ATantrumnGameModeBase::StartGame()
 		{
 			PlayerController->SetInputMode(FInputModeGameOnly());
 			PlayerController->SetShowMouseCursor(false);
-		}
-	}
-}
 
-void ATantrumnGameModeBase::DisplayPausedMenu()
-{
-	if (!PausedWidgetClass)
-	{
-		return;
-	}
-
-	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
-	{
-		APlayerController* PlayerController = Iterator->Get();
-		if (PlayerController && PlayerController->PlayerState && !MustSpectate(PlayerController))
-		{
-			if (UTantrumnPausedWidget* PausedWidget = CreateWidget<UTantrumnPausedWidget>(PlayerController, PausedWidgetClass))
+			ATantrumnPlayerState* PlayerState = PlayerController->GetPlayerState<ATantrumnPlayerState>();
+			if (PlayerState)
 			{
-				PausedWidget->LevelPaused(this);
-				PausedWidget->AddToPlayerScreen();
-				PausedWidgets.Add(PlayerController, PausedWidget);
+				PlayerState->SetCurrentState(EPlayerGameState::Playing);
+				PlayerState->SetIsWinner(false);
 			}
 		}
 	}
@@ -184,89 +147,15 @@ void ATantrumnGameModeBase::DisplayPausedMenu()
 
 void ATantrumnGameModeBase::DisplayEquippedWidget()
 {
-	if (!EquippedNameWidgetClass)
-	{
-		return;
-	}
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
 	{
 		APlayerController* PlayerController = Iterator->Get();
 		if (PlayerController && PlayerController->PlayerState && !MustSpectate(PlayerController))
 		{
-			if (UEquippedNameWidget* EquippedNameWidget = CreateWidget<UEquippedNameWidget>(PlayerController, EquippedNameWidgetClass))
+			if (ATantrumnPlayerController* TantrumnPlayerController = Cast< ATantrumnPlayerController>(PlayerController))
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("EquippedWidget"));
-				EquippedNameWidget->AddToPlayerScreen();
-				EquippedNameWidgets.Add(PlayerController, EquippedNameWidget);
+				TantrumnPlayerController->ClientDisplayEquippedWidget();
 			}
 		}
-	}
-}
-
-void ATantrumnGameModeBase::DisplayEquippedName(AThrowableActor* InThrowableActor, APlayerController* PlayerController)
-{
-	ThrowableActor = InThrowableActor;
-	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
-
-	if (EquippedNameWidget)
-	{
-		GetNameInterface = Cast<IGetNameInterface>(ThrowableActor);
-		if (GetNameInterface)
-		{
-			if (ThrowableActor->GetClass()->ImplementsInterface(UGetNameInterface::StaticClass()))
-			{
-				FText Name = GetNameInterface->GetName();
-				(*EquippedNameWidget)->EquippedName->SetText(Name);
-			}
-		}
-	}
-}
-
-void ATantrumnGameModeBase::DisplayBuffName(AThrowableActor* InThrowableActor, APlayerController* PlayerController)
-{
-	ThrowableActor = InThrowableActor;
-	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
-
-	if (EquippedNameWidget)
-	{
-		GetNameInterface = Cast<IGetNameInterface>(ThrowableActor);
-		if (GetNameInterface)
-		{
-			if (ThrowableActor->GetClass()->ImplementsInterface(UGetNameInterface::StaticClass()))
-			{
-				FText Name = GetNameInterface->GetName();
-				(*EquippedNameWidget)->BuffName->SetText(Name);
-			}
-		}
-	}
-}
-
-void ATantrumnGameModeBase::RemoveEquippedWidget(APlayerController* PlayerController)
-{
-	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
-
-	if (EquippedNameWidget)
-	{
-		(*EquippedNameWidget)->RemoveFromParent();
-	}
-}
-
-void ATantrumnGameModeBase::RemoveEquippedName(APlayerController* PlayerController)
-{
-	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
-
-	if (EquippedNameWidget)
-	{
-		(*EquippedNameWidget)->EquippedName->SetText(FText::FromString(""));
-	}
-}
-
-void ATantrumnGameModeBase::RemoveBuffName(APlayerController* PlayerController)
-{
-	UEquippedNameWidget** EquippedNameWidget = EquippedNameWidgets.Find(PlayerController);
-
-	if (EquippedNameWidget)
-	{
-		(*EquippedNameWidget)->BuffName->SetText(FText::FromString(""));
 	}
 }

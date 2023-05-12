@@ -6,11 +6,10 @@
 #include "GameFramework/Character.h"
 #include "Components/BoxComponent.h"
 #include "InteractionInterface.h"
-#include "ThrowableActor.h"
 #include "Sound/SoundCue.h"
 #include "TantrumnCharacterBase.generated.h"
 
-class ATantrumnGameModeBase;
+class AThrowableActor;
 
 UENUM(BlueprintType)
 enum class ECharacterThrowState : uint8
@@ -54,11 +53,10 @@ protected:
 	float MaxStunTime = 1.0f;
 
 	float StunTime = 0.0f;
-	float StunBeginTimestamp = 0.0f;
+	float CurrentStunTimer = 0.0f;
 
 	bool bIsStunned = false;
 	bool bIsSprinting = false;
-	bool bIsThrowableActorAttached = false;
 
 	float MaxWalkSpeed = 0.0f;
 
@@ -66,15 +64,20 @@ protected:
 
 	void OnStunBegin(float StunRatio);
 	void OnStunEnd();
-	void UpdateStun();
+	void UpdateStun(float DeltaTime);
 
-	void UpdateRescue(float DeltaTime);
 	void StartRescue();
+	void UpdateRescue(float DeltaTime);
 	void EndRescue();
 
 
 	bool PlayThrowMontage();
+	bool PlayCelebrateMontage();
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlayCelebrateMontage();
+
+	void UpdateThrowMontagePlayRate();
 	void UnbindMontage();
 
 	UFUNCTION()
@@ -101,6 +104,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Animation")
 	UAnimMontage* ThrowMontage = nullptr;
 
+	UPROPERTY(EditAnywhere, Category = "Animation")
+	UAnimMontage* CelebrateMontage = nullptr;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* InteractionBox;
 
@@ -112,13 +118,20 @@ protected:
 
 	//handle fall out of world
 	//Last Position on World when OnGround
+	UPROPERTY(replicated)
 	FVector LastGroundPosition = FVector::ZeroVector;
+
+	UPROPERTY(ReplicatedUsing = OnRep_IsBeingRescued)
+	bool bIsBeingRescued = false;
+
+	UFUNCTION()
+	void OnRep_IsBeingRescued();
+
 	//Position From Player when it Hits KillZ
 	FVector FallOutOfWorldPosition = FVector::ZeroVector;
 	// Used to set a timer from Moving Player back to Ground
 	float CurrentRescueTime = 0.0f;
-	//Set to true in fell out of world
-	bool bIsPlayerBeingRescued = false;
+
 	//Set time that takes to put Player back in Ground
 	UPROPERTY(EditAnywhere, Category = "KillZ")
 	float TimeToRescuePlayer = 3.f;
@@ -153,21 +166,24 @@ public:
 	void OnThrowableAttached(AThrowableActor* InThrowableActor);
 
 	void SphereCastPlayerView();
-
 	void SphereCastActorTransform();
-
 	void LineCastActorTransform();
-
 	void ProcessTraceResult(const FHitResult& HitResult);
 
 	//RPC's actions that can need to be done on the server in order to replicate
+	UFUNCTION(Server, Reliable)
+	void ServerSprintStart();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSprintEnd();
+
 	UFUNCTION(Server, Reliable)
 	void ServerPullObject(AThrowableActor* InThrowableActor);
 
 	UFUNCTION(Server, Reliable)
 	void ServerRequestPullObject(bool bIsPulling);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerRequestThrowObject();
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -184,7 +200,7 @@ public:
 
 	bool CanThrowObject() const 
 	{ 
-		return CharacterThrowState == ECharacterThrowState::Attached || CharacterThrowState == ECharacterThrowState::Pulling;
+		return CharacterThrowState == ECharacterThrowState::Attached;
 	}
 
 	UFUNCTION(BlueprintPure)
@@ -194,7 +210,12 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure)
-	ECharacterThrowState GetCharacterThrowState() const 
+	bool IsThrowing() const { 
+		return CharacterThrowState == ECharacterThrowState::Throwing; 
+	}
+
+	UFUNCTION(BlueprintPure)
+	ECharacterThrowState GetCharacterThrowState() const
 	{ 
 		return CharacterThrowState; 
 	}
@@ -206,10 +227,15 @@ public:
 	}
 
 	UFUNCTION(BlueprintPure)
-	bool IsThrowableActorAttached() const
-	{
-		return bIsThrowableActorAttached;
+	bool IsBeingRescued() const { 
+		return bIsBeingRescued; 
 	}
+
+	UFUNCTION(BlueprintPure)
+	bool IsHovering() const;
+
+	UFUNCTION(Server, Reliable)
+	void ServerPlayCelebrateMontage();
 
 	IInteractionInterface* Interface = nullptr;
 
@@ -230,7 +256,7 @@ private:
 	void OnBoxEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	void ApplyEffect_Implementation(EEffectType EffectType, bool bIsBuff) override;
-
+	void UpdateEffect(float DeltaTime);
 	void EndEffect();
 
 	bool bIsUnderEffect = false;
@@ -240,6 +266,4 @@ private:
 	float EffectCooldown = 0.0f;
 
 	EEffectType CurrentEffect = EEffectType::None;
-
-	ATantrumnGameModeBase* GameModeRef;
 };

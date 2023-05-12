@@ -7,7 +7,9 @@
 #include "Sound/SoundCue.h"
 #include "TantrumnPlayerController.generated.h"
 
-class ATantrumnGameModeBase;
+//class ATantrumnGameModeBase;
+class ATantrumnCharacterBase;
+class ATantrumnGameStateBase;
 class UUserWidget;
 
 /**
@@ -24,8 +26,32 @@ public:
 	//in local mp we need to make sure the controller has received the player in order to correctly set up the hud
 	virtual void ReceivedPlayer() override;
 
+	virtual void OnPossess(APawn* aPawn) override;
+	virtual void OnUnPossess() override;
+
+	UFUNCTION(Client, Reliable)
+	void ClientDisplayCountdown(float GameCountdownDuration);
+
+	UFUNCTION(Client, Reliable)
+	void ClientRestartGame();
+
+	UFUNCTION(Client, Reliable)
+	void ClientReachedEnd();
+
+	UFUNCTION(Client, Reliable)
+	void ClientPauseGame();
+
+	UFUNCTION(Client, Reliable)
+	void ClientDisplayEquippedWidget();
+
+	UFUNCTION(Server, Reliable)
+	void ServerRestartLevel();
+
+
 protected:
 	void SetupInputComponent() override;
+
+	bool CanProcessRequest() const;
 
 	void RequestJumpStart();
 	void RequestJumpStop();
@@ -51,10 +77,8 @@ protected:
 
 	void OnInteract();
 
-	void OnPauseGame();
-
 	UPROPERTY(EditAnywhere, Category = "HUD")
-	TSubclassOf<class UUserWidget> HUDClass;
+	TSubclassOf<UUserWidget> HUDClass;
 
 	UPROPERTY()
 	UUserWidget* HUDWidget;
@@ -70,6 +94,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Sound")
 	USoundCue* JumpSound = nullptr;
 
-	ATantrumnGameModeBase* GameModeRef;
+	UPROPERTY()
+	ATantrumnGameStateBase* TantrumnGameState;
 
 };
