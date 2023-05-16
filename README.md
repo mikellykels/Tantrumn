@@ -10,4 +10,5 @@
 - Week 7: Expanding on AI  
 - Week 8: Interfaces and Data Tables  
 - Week 9: Multiplayer  
-- Week 10: Online
+- Week 10: Online  
+- Week 11: AI Implementation
