@@ -168,7 +168,7 @@ public:
 	void SphereCastPlayerView();
 	void SphereCastActorTransform();
 	void LineCastActorTransform();
-	void ProcessTraceResult(const FHitResult& HitResult);
+	void ProcessTraceResult(const FHitResult& HitResult, bool bHighlight = true);
 
 	//RPC's actions that can need to be done on the server in order to replicate
 	UFUNCTION(Server, Reliable)
@@ -208,6 +208,9 @@ public:
 	{ 
 		return CharacterThrowState == ECharacterThrowState::RequestingPull || CharacterThrowState == ECharacterThrowState::Pulling; 
 	}
+
+	UFUNCTION(BlueprintCallable)
+	bool AttemptPullObjectAtLocation(const FVector& InLocation);
 
 	UFUNCTION(BlueprintPure)
 	bool IsThrowing() const { 

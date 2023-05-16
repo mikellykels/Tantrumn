@@ -5,6 +5,7 @@
 #include "TantrumnGameWidget.h"
 #include "TantrumnGameInstance.h"
 #include "TantrumnGameStateBase.h"
+#include "TantrumnEnemyAIController.h"
 #include "TantrumnPlayerController.h"
 #include "TantrumnPlayerState.h"
 #include "GameFramework/Character.h"
@@ -47,6 +48,16 @@ void ATantrumnGameModeBase::RestartPlayer(AController* NewPlayer)
 
 void ATantrumnGameModeBase::RestartGame()
 {
+	// destroy actor
+	for (FConstControllerIterator Iterator = GetWorld()->GetControllerIterator(); Iterator; ++Iterator)
+	{
+		ATantrumnEnemyAIController* TantrumnEnemyAIController = Cast<ATantrumnEnemyAIController>(Iterator->Get());
+		if (TantrumnEnemyAIController && TantrumnEnemyAIController->GetPawn())
+		{
+			TantrumnEnemyAIController->Destroy(true);
+		}
+	}
+
 	ResetLevel();
 	//RestartGame();
 	//GetWorld()->ServerTravel(TEXT("?Restart"), false);
@@ -125,6 +136,20 @@ void ATantrumnGameModeBase::StartGame()
 	{
 		TantrumnGameState->SetGameState(EGameState::Playing);
 		TantrumnGameState->ClearResults();
+	}
+
+	for (FConstControllerIterator Iterator = GetWorld()->GetControllerIterator(); Iterator; ++Iterator)
+	{
+		ATantrumnEnemyAIController* TantrumnEnemyAIController = Cast<ATantrumnEnemyAIController>(Iterator->Get());
+		if (TantrumnEnemyAIController && TantrumnEnemyAIController->GetPawn())
+		{
+			ATantrumnPlayerState* PlayerState = TantrumnEnemyAIController->GetPlayerState<ATantrumnPlayerState>();
+			if (PlayerState)
+			{
+				PlayerState->SetCurrentState(EPlayerGameState::Playing);
+				PlayerState->SetIsWinner(false);
+			}
+		}
 	}
 
 	for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)

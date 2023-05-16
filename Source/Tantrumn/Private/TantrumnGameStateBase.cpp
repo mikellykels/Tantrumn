@@ -5,6 +5,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "TantrumnCharacterBase.h"
+#include "TantrumnEnemyAIController.h"
 #include "TantrumnPlayerController.h"
 #include "TantrumnPlayerState.h"
 
@@ -19,6 +20,7 @@ void ATantrumnGameStateBase::OnPlayerReachedEnd(ATantrumnCharacterBase* Tantrumn
 		TantrumnCharacter->GetCharacterMovement()->DisableMovement();
 
 		ATantrumnPlayerState* PlayerState = TantrumnPlayerController->GetPlayerState<ATantrumnPlayerState>();
+		//UpdateResults(PlayerState, TantrumnCharacter);
 		if (PlayerState)
 		{
 			const bool IsWinner = Results.Num() == 0;
@@ -37,6 +39,24 @@ void ATantrumnGameStateBase::OnPlayerReachedEnd(ATantrumnCharacterBase* Tantrumn
 		{
 			GameState = EGameState::GameOver;
 		}
+	}
+	else if (ATantrumnEnemyAIController* TantrumnEnemyAIController = TantrumnCharacter->GetController<ATantrumnEnemyAIController>())
+	{
+		ATantrumnPlayerState* PlayerState = TantrumnEnemyAIController->GetPlayerState<ATantrumnPlayerState>();
+		//UpdateResults(PlayerState, TantrumnCharacter);
+		if (PlayerState)
+		{
+			const bool IsWinner = Results.Num() == 0;
+			PlayerState->SetIsWinner(IsWinner);
+			PlayerState->SetCurrentState(EPlayerGameState::Finished);
+		}
+
+		FGameResult Result;
+		Result.Name = TantrumnCharacter->GetName();
+		//TODO get the actual time it took in order to post to a leaderboard/results widget
+		Result.Time = 5.0f;
+		Results.Add(Result);
+		TantrumnEnemyAIController->OnReachedEnd();
 	}
 }
 
