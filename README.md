@@ -11,4 +11,5 @@
 - Week 8: Interfaces and Data Tables  
 - Week 9: Multiplayer  
 - Week 10: Online  
-- Week 11: AI Implementation
+- Week 11: AI Implementation  
+- Week 12: Putting it all together
