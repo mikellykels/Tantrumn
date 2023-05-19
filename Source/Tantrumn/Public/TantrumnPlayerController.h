@@ -7,9 +7,10 @@
 #include "Sound/SoundCue.h"
 #include "TantrumnPlayerController.generated.h"
 
-//class ATantrumnGameModeBase;
+class ATantrumnGameModeBase;
 class ATantrumnCharacterBase;
 class ATantrumnGameStateBase;
+class UTantrumnGameWidget;
 class UUserWidget;
 
 /**
@@ -30,7 +31,7 @@ public:
 	virtual void OnUnPossess() override;
 
 	UFUNCTION(Client, Reliable)
-	void ClientDisplayCountdown(float GameCountdownDuration);
+	void ClientDisplayCountdown(float GameCountdownDuration, TSubclassOf<UTantrumnGameWidget> InGameWidgetClass);
 
 	UFUNCTION(Client, Reliable)
 	void ClientRestartGame();
@@ -46,6 +47,9 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerRestartLevel();
+
+	UFUNCTION(BlueprintCallable)
+	void OnRetrySelected();
 
 
 protected:
@@ -72,8 +76,8 @@ protected:
 	void RequestThrowObject();
 	void RequestUseObject();
 
-	void RequestPullObjectStart();
-	void RequestPullObjectStop();
+	void RequestPullorAimObjectStart();
+	void RequestPullorAimObjectStop();
 
 	void OnInteract();
 
@@ -82,6 +86,9 @@ protected:
 
 	UPROPERTY()
 	UUserWidget* HUDWidget;
+
+	UPROPERTY()
+	UTantrumnGameWidget* TantrumnGameWidget;
 
 	// Base lookup rate, in deg/sec. Other scaling may affect final lookup rate
 	UPROPERTY(EditAnywhere, Category = "Look")
@@ -97,4 +104,5 @@ protected:
 	UPROPERTY()
 	ATantrumnGameStateBase* TantrumnGameState;
 
+	ATantrumnGameModeBase* GameModeBase;
 };

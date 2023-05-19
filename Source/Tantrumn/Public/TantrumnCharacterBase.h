@@ -10,6 +10,7 @@
 #include "TantrumnCharacterBase.generated.h"
 
 class AThrowableActor;
+class ATantrumnGameModeBase;
 
 UENUM(BlueprintType)
 enum class ECharacterThrowState : uint8
@@ -19,6 +20,7 @@ enum class ECharacterThrowState : uint8
 	Pulling        UMETA(DisplayName = "Pulling"),
 	Attached       UMETA(DisplayName = "Attached"),
 	Throwing       UMETA(DisplayName = "Throwing"),
+	Aiming         UMETA(DisplayName = "Aiming"),
 };
 
 UCLASS()
@@ -50,7 +52,7 @@ protected:
 	float MinStunTime = 1.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Fall Impact")
-	float MaxStunTime = 1.0f;
+	float MaxStunTime = 5.0f;
 
 	float StunTime = 0.0f;
 	float CurrentStunTimer = 0.0f;
@@ -157,8 +159,9 @@ public:
 	void Fire();
 
 	void RequestThrowObject();
-	void RequestPullObjectStart();
-	void RequestPullObjectStop();
+	void RequestPullorAimObjectStart();
+	void RequestPullorAimObjectStop();
+	void RequestAim();
 	void ResetThrowableObject();
 
 	void RequestUseObject();
@@ -178,13 +181,16 @@ public:
 	void ServerSprintEnd();
 
 	UFUNCTION(Server, Reliable)
-	void ServerPullObject(AThrowableActor* InThrowableActor);
+	void ServerPullorAimObject(AThrowableActor* InThrowableActor);
 
 	UFUNCTION(Server, Reliable)
-	void ServerRequestPullObject(bool bIsPulling);
+	void ServerRequestPullorAimObject(bool bIsPulling);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerRequestThrowObject();
+
+	UFUNCTION(Server, Reliable)
+	void ServerRequestToggleAim(bool bIsAiming);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastRequestThrowObject();
@@ -200,7 +206,7 @@ public:
 
 	bool CanThrowObject() const 
 	{ 
-		return CharacterThrowState == ECharacterThrowState::Attached;
+		return CharacterThrowState == ECharacterThrowState::Attached || CharacterThrowState == ECharacterThrowState::Aiming;
 	}
 
 	UFUNCTION(BlueprintPure)
@@ -237,6 +243,24 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsHovering() const;
 
+	UFUNCTION(BlueprintPure)
+	bool CanAim() const
+	{
+		return CharacterThrowState == ECharacterThrowState::Attached;
+	}
+
+	UFUNCTION(BlueprintPure)
+	bool IsAiming() const
+	{
+		return CharacterThrowState == ECharacterThrowState::Aiming;
+	}
+
+	UFUNCTION(BlueprintCallable)
+	void NotifyHitByThrowable(AThrowableActor* InThrowable)
+	{
+		OnStunBegin(1.0f);
+	}
+
 	UFUNCTION(Server, Reliable)
 	void ServerPlayCelebrateMontage();
 
@@ -269,4 +293,6 @@ private:
 	float EffectCooldown = 0.0f;
 
 	EEffectType CurrentEffect = EEffectType::None;
+
+	ATantrumnGameModeBase* GameModeBase;
 };

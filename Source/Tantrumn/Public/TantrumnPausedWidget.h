@@ -7,7 +7,7 @@
 #include "TantrumnPausedWidget.generated.h"
 
 class UButton;
-class ATantrumnPlayerController;
+//class ATantrumnPlayerController;
 /**
  * 
  */
@@ -19,5 +19,5 @@ class TANTRUMN_API UTantrumnPausedWidget : public UUserWidget
 public:
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void LevelPaused(ATantrumnPlayerController* TantrumnPlayerController);
+	void LevelPaused(APlayerController* PlayerController);
 };

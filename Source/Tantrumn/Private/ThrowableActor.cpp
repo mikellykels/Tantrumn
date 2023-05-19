@@ -63,7 +63,6 @@ void AThrowableActor::Launch(const FVector& InitialVelocity, AActor* Target)
 {
 	if (State == EState::Pull || State == EState::Attached)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("LAUNCHED"));
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		ProjectileMovementComponent->Activate(true);
 		ProjectileMovementComponent->HomingTargetComponent = nullptr;
@@ -125,6 +124,15 @@ void AThrowableActor::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPri
 		if (I)
 		{
 			I->Execute_ApplyEffect(Other, EffectType, false);
+		}
+
+		AActor* CurrentOwner = GetOwner();
+		if (CurrentOwner && CurrentOwner != Other)
+		{
+			if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(Other))
+			{
+				TantrumnCharacterBase->NotifyHitByThrowable(this);
+			}
 		}
 	}
 
