@@ -9,6 +9,8 @@
 #include "Components/WidgetComponent.h"
 #include "LightSwitch.generated.h"
 
+class ATantrumnCharacterBase;
+
 UCLASS()
 class TANTRUMN_API ALightSwitch : public AActor, public IInteractionInterface
 {

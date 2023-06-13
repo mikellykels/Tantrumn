@@ -57,20 +57,20 @@ void ATantrumnPlayerController::ClientRestartGame_Implementation()
 	}
 }
 
-void ATantrumnPlayerController::ClientReachedEnd_Implementation()
+void ATantrumnPlayerController::ClientReachedEnd_Implementation(ATantrumnCharacterBase* TantrumnCharacter)
 {
 	//this needs to be named better, it's just displaying the end screen
 	//this will be seperate, as it will come after the montage...
 	//client gets hud authority needs to replicate the montage
-
-	if (ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter()))
+	//ATantrumnCharacterBase* TantrumnCharacterBase = Cast<ATantrumnCharacterBase>(GetCharacter())
+	if (TantrumnCharacter)
 	{
-		TantrumnCharacterBase->ServerPlayCelebrateMontage();
-		TantrumnCharacterBase->GetCharacterMovement()->DisableMovement();
-	}
+		TantrumnCharacter->ServerPlayCelebrateMontage();
+		TantrumnCharacter->GetCharacterMovement()->DisableMovement();
 
-	SetInputMode(FInputModeUIOnly());
-	SetShowMouseCursor(true);
+		SetInputMode(FInputModeGameAndUI());
+		SetShowMouseCursor(true);
+	}
 
 	if (TantrumnGameWidget)
 	{

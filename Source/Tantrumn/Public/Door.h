@@ -8,6 +8,8 @@
 #include "Components/WidgetComponent.h"
 #include "Door.generated.h"
 
+class ATantrumnCharacterBase;
+
 UCLASS()
 class TANTRUMN_API ADoor : public AActor, public IInteractionInterface
 {
@@ -25,7 +27,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void InteractWithMe() override;
+	virtual void InteractWithMe();
 	virtual void ShowInteractionWidget() override;
 	virtual void HideInteractionWidget() override;
 
@@ -44,11 +46,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* DoorFrameMesh;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UWidgetComponent* InteractionWidget;
+
 private:
 
 	UPROPERTY(EditAnywhere)
 	USceneComponent* _RootComponent;
-
-	UPROPERTY(EditAnywhere)
-	UWidgetComponent* InteractionWidget;
 };

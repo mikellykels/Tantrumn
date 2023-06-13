@@ -2,6 +2,7 @@
 
 
 #include "Door.h"
+#include "TantrumnCharacterBase.h"
 
 // Sets default values
 ADoor::ADoor()

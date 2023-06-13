@@ -37,7 +37,7 @@ public:
 	void ClientRestartGame();
 
 	UFUNCTION(Client, Reliable)
-	void ClientReachedEnd();
+	void ClientReachedEnd(ATantrumnCharacterBase* TantrumnCharacter);
 
 	UFUNCTION(Client, Reliable)
 	void ClientPauseGame();

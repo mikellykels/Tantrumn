@@ -111,17 +111,21 @@ void ATantrumnGameModeBase::PauseGame(APlayerController* PlayerController)
 	PlayerController->SetShowMouseCursor(true);
 }
 
-void ATantrumnGameModeBase::ResumeGame(APlayerController* PlayerController)
+void ATantrumnGameModeBase::ResumeGame(APlayerController* InPlayerController)
 {
-	UTantrumnPausedWidget** PausedWidget = PausedWidgets.Find(PlayerController);
-	if (PausedWidget)
-	{
-		UGameplayStatics::SetGamePaused(GetWorld(), false);
-		(*PausedWidget)->RemoveFromParent();
-		//restore game input 
-		PlayerController->SetInputMode(FInputModeGameOnly());
-		PlayerController->SetShowMouseCursor(false);
-	}
+		for (FConstPlayerControllerIterator Iterator = GetWorld()->GetPlayerControllerIterator(); Iterator; ++Iterator)
+		{
+			APlayerController* PlayerController = Iterator->Get();
+			if (PlayerController && PlayerController->PlayerState && !MustSpectate(PlayerController))
+			{
+				UTantrumnPausedWidget** PausedWidget = PausedWidgets.Find(PlayerController);
+				UGameplayStatics::SetGamePaused(GetWorld(), false);
+				(*PausedWidget)->RemoveFromParent();
+
+				PlayerController->SetInputMode(FInputModeGameOnly());
+				PlayerController->SetShowMouseCursor(false);
+			}
+		}
 }
 
 void ATantrumnGameModeBase::AttemptStartGame()

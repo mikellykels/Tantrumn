@@ -281,6 +281,7 @@ void ATantrumnCharacterBase::OnStunBegin(float StunRatio)
 	const float StunDelt = MaxStunTime - MinStunTime;
 	StunTime = MinStunTime + (StunRatio * StunDelt);
 	CurrentStunTimer = 0.0f;
+	GetCharacterMovement()->DisableMovement();
 	bIsStunned = true;
 	if (bIsSprinting)
 	{
@@ -306,6 +307,7 @@ void ATantrumnCharacterBase::OnStunEnd()
 {
 	CurrentStunTimer = 0.0f;
 	StunTime = 0.0f;
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 }
 
 void ATantrumnCharacterBase::UpdateRescue(float DeltaTime)
@@ -408,7 +410,6 @@ void ATantrumnCharacterBase::RequestPullorAimObjectStop()
 	{
 		CharacterThrowState = ECharacterThrowState::None;
 		ServerRequestPullorAimObject(false);
-		//ResetThrowableObject();
 	}
 }
 
@@ -434,21 +435,24 @@ void ATantrumnCharacterBase::ResetThrowableObject()
 
 void ATantrumnCharacterBase::RequestUseObject()
 {
-	if (!bIsUnderEffect && ThrowableActor->GetEffectType() != EEffectType::None)
+	if (CharacterThrowState == ECharacterThrowState::Attached)
 	{
-		if (UTantrumnGameInstance* TantrumnGameInstance = GetWorld()->GetGameInstance<UTantrumnGameInstance>())
+		if (!bIsUnderEffect && ThrowableActor->GetEffectType() != EEffectType::None)
 		{
-			ATantrumnPlayerController* TantrumnPlayerController = GetController<ATantrumnPlayerController>();
-			if (TantrumnPlayerController)
+			if (UTantrumnGameInstance* TantrumnGameInstance = GetWorld()->GetGameInstance<UTantrumnGameInstance>())
 			{
-				GameModeBase->DisplayBuffName(ThrowableActor, TantrumnPlayerController);
-				GameModeBase->RemoveEquippedName(TantrumnPlayerController);
+				ATantrumnPlayerController* TantrumnPlayerController = GetController<ATantrumnPlayerController>();
+				if (TantrumnPlayerController)
+				{
+					GameModeBase->DisplayBuffName(ThrowableActor, TantrumnPlayerController);
+					GameModeBase->RemoveEquippedName(TantrumnPlayerController);
+
+					ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
+					ThrowableActor->Destroy();
+					ResetThrowableObject();
+				}
 			}
 		}
-
-		ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
-		ThrowableActor->Destroy();
-		ResetThrowableObject();
 	}
 }
 
@@ -659,7 +663,6 @@ void ATantrumnCharacterBase::MulticastRequestThrowObject_Implementation()
 	{
 		return;
 	}
-
 	PlayThrowMontage();
 	CharacterThrowState = ECharacterThrowState::Throwing;
 }
@@ -682,7 +685,7 @@ void ATantrumnCharacterBase::ServerBeginThrow_Implementation()
 			RootPrimitiveComponent->IgnoreActorWhenMoving(this, true);
 		}
 	}
-	//const FVector& Direction = GetMesh()->GetSocketRotation(TEXT("ObjectAttach")).Vector() * -ThrowSpeed;
+
 	const FVector& Direction = GetActorForwardVector() * ThrowSpeed;
 	ThrowableActor->Launch(Direction);
 
@@ -718,7 +721,6 @@ void ATantrumnCharacterBase::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedCo
 {
 		if (OtherActor->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass()))
 		{
-			APlayerController* PlayerController = GetController<APlayerController>();
 			TArray<AActor*> OverlappingActors;
 			GetOverlappingActors(OverlappingActors);
 
@@ -742,7 +744,6 @@ void ATantrumnCharacterBase::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedCo
 				Interface = Cast<IInteractionInterface>(ClosestActor);
 				if (Interface)
 				{
-					//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Show Interaction"));
 					Interface->ShowInteractionWidget();
 				}
 			}
@@ -825,7 +826,7 @@ void ATantrumnCharacterBase::EndEffect()
 			bIsEffectBuff ? SprintSpeed /= 2, RequestSprintEnd() : GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 			break;
 		case EEffectType::Jump:
-			bIsEffectBuff ? JumpHeight /=3, RequestJumpStop() : GetCharacterMovement()->DisableMovement();
+			bIsEffectBuff ? JumpHeight /=3, RequestJumpStop() : GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 			break;
 		case EEffectType::Power:
 			if (bIsEffectBuff)
@@ -834,7 +835,7 @@ void ATantrumnCharacterBase::EndEffect()
 			}
 			else
 			{
-				GetCharacterMovement()->DisableMovement();
+				GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 			}
 			break;
 		default:

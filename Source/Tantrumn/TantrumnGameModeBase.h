@@ -35,7 +35,7 @@ public:
 	void PauseGame(APlayerController* PlayerController);
 	
 	UFUNCTION(BlueprintCallable)
-	void ResumeGame(APlayerController* PlayerController);
+	void ResumeGame(APlayerController* InPlayerController);
 
 	void DisplayEquippedWidget(APlayerController* PlayerController);
 	void DisplayEquippedName(AThrowableActor* InThrowableActor, APlayerController* PlayerController);
