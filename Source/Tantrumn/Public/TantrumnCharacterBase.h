@@ -52,7 +52,7 @@ protected:
 	float MinStunTime = 1.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Fall Impact")
-	float MaxStunTime = 5.0f;
+	float MaxStunTime = 4.0f;
 
 	float StunTime = 0.0f;
 	float CurrentStunTimer = 0.0f;
