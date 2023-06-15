@@ -400,6 +400,13 @@ void ATantrumnCharacterBase::RequestPullorAimObjectStart()
 	{
 		CharacterThrowState = ECharacterThrowState::RequestingPull;
 		ServerRequestPullorAimObject(true);
+
+		// SoundCue Triggers
+		if (PullOrAimSound && GetOwner())
+		{
+			FVector CharacterLocation = GetOwner()->GetActorLocation();
+			UGameplayStatics::PlaySoundAtLocation(this, PullOrAimSound, CharacterLocation);
+		}
 	}
 }
 
@@ -450,6 +457,13 @@ void ATantrumnCharacterBase::RequestUseObject()
 					ApplyEffect_Implementation(ThrowableActor->GetEffectType(), true);
 					ThrowableActor->Destroy();
 					ResetThrowableObject();
+
+					// SoundCue Triggers
+					if (UseBuffSound && GetOwner())
+					{
+						FVector CharacterLocation = GetOwner()->GetActorLocation();
+						UGameplayStatics::PlaySoundAtLocation(this, UseBuffSound, CharacterLocation);
+					}
 				}
 			}
 		}
@@ -469,6 +483,13 @@ void ATantrumnCharacterBase::OnThrowableAttached(AThrowableActor* InThrowableAct
 		if (TantrumnPlayerController)
 		{
 			GameModeBase->DisplayEquippedName(ThrowableActor, TantrumnPlayerController);
+
+			// SoundCue Triggers
+			if (BallAttachedSound && GetOwner())
+			{
+				FVector CharacterLocation = GetOwner()->GetActorLocation();
+				UGameplayStatics::PlaySoundAtLocation(this, BallAttachedSound, CharacterLocation);
+			}
 		}
 	}
 }

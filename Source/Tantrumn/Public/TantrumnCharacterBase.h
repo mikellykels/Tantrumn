@@ -62,7 +62,17 @@ protected:
 
 	float MaxWalkSpeed = 0.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Sounds")
 	USoundCue* HeavyLandSound = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundCue* PullOrAimSound = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundCue* UseBuffSound = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundCue* BallAttachedSound = nullptr;
 
 	void OnStunBegin(float StunRatio);
 	void OnStunEnd();

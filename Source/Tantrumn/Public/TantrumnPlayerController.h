@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Sound/SoundCue.h"
 #include "TantrumnPlayerController.generated.h"
 
 class ATantrumnGameModeBase;
@@ -97,9 +96,6 @@ protected:
 	// Base lookup rate, in deg/sec. Other scaling may affect final lookup rate
 	UPROPERTY(EditAnywhere, Category = "Look")
 	float BaseLookRightRate = 90.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Sound")
-	USoundCue* JumpSound = nullptr;
 
 	UPROPERTY()
 	ATantrumnGameStateBase* TantrumnGameState;

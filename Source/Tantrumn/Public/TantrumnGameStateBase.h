@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "Sound/SoundCue.h"
 #include "TantrumnGameStateBase.generated.h"
 
 // Enum to track the current state of the game 
@@ -79,5 +80,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, replicated, Category = "States")
 	TArray<FGameResult> Results;
+
+	UPROPERTY(EditAnywhere, Category = "Sounds")
+	USoundCue* EndLevelSound = nullptr;
 	
 };

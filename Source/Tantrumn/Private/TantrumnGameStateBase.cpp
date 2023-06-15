@@ -3,6 +3,7 @@
 
 #include "TantrumnGameStateBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "TantrumnCharacterBase.h"
 #include "TantrumnEnemyAIController.h"
@@ -36,6 +37,13 @@ void ATantrumnGameStateBase::OnPlayerReachedEnd(ATantrumnCharacterBase* Tantrumn
 
 		TantrumnPlayerController->ClientReachedEnd(TantrumnCharacter);
 		TantrumnCharacter->GetCharacterMovement()->DisableMovement();
+
+		// SoundCue Triggers
+		if (EndLevelSound && TantrumnCharacter->GetOwner())
+		{
+			FVector CharacterLocation = TantrumnCharacter->GetOwner()->GetActorLocation();
+			UGameplayStatics::PlaySoundAtLocation(this, EndLevelSound, CharacterLocation);
+		}
 
 		ATantrumnPlayerState* PlayerState = TantrumnPlayerController->GetPlayerState<ATantrumnPlayerState>();
 		UpdateResults(PlayerState, TantrumnCharacter);
