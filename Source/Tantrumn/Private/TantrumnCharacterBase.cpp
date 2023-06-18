@@ -435,6 +435,15 @@ void ATantrumnCharacterBase::ResetThrowableObject()
 	if (ThrowableActor)
 	{
 		ThrowableActor->Drop();
+
+		if (UTantrumnGameInstance* TantrumnGameInstance = GetWorld()->GetGameInstance<UTantrumnGameInstance>())
+		{
+			ATantrumnPlayerController* TantrumnPlayerController = GetController<ATantrumnPlayerController>();
+			if (TantrumnPlayerController)
+			{
+				GameModeBase->RemoveEquippedName(TantrumnPlayerController);
+			}
+		}
 	}
 	CharacterThrowState = ECharacterThrowState::None;
 	ThrowableActor = nullptr;
